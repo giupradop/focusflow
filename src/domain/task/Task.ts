@@ -50,12 +50,30 @@ export class Task extends Entity<number> {
     )
   }
 
-  get totalSpentSeconds(): number {
-    return this.props.sessions.reduce((acc, s) => acc + s.durationSeconds, 0)
+  isCarriedOver(weekStart: Date): boolean {
+    const createdAt = new Date(this.props.createdAt)
+    createdAt.setHours(0, 0, 0, 0)
+    return (
+      createdAt < weekStart &&
+      this.props.status !== TaskStatus.DONE &&
+      !this.props.archived
+    )
   }
 
-  get remainingSeconds(): number {
-    return this.props.estimatedMinutes * 60 - this.totalSpentSeconds
+  isVisibleInWeek(weekStart: Date, weekEnd: Date): boolean {
+    const createdAt = new Date(this.props.createdAt)
+    createdAt.setHours(0, 0, 0, 0)
+
+    const inCreationWeek = createdAt >= weekStart && createdAt <= weekEnd
+
+    const carriedToCurrentWeek = this.isCarriedOver(weekStart)
+
+    const completedThisWeek =
+      this.props.completedAt !== undefined &&
+      this.props.completedAt >= weekStart &&
+      this.props.completedAt <= weekEnd
+
+    return inCreationWeek || carriedToCurrentWeek || completedThisWeek
   }
 
   // ── ações ──
@@ -125,4 +143,10 @@ export class Task extends Entity<number> {
   get recurPaused() { return this.props.recurPaused }
   get sessions() { return this.props.sessions }
   get completedAt() { return this.props.completedAt }
+  get totalSpentSeconds(): number {
+    return this.props.sessions.reduce((acc, s) => acc + s.durationSeconds, 0)
+  }
+  get remainingSeconds(): number {
+    return this.props.estimatedMinutes * 60 - this.totalSpentSeconds
+  }
 }
