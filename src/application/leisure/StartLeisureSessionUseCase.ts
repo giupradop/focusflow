@@ -32,6 +32,8 @@ export class StartLeisureSessionUseCase {
     const sessionId = Date.now()
     const session = LeisureSession.create(sessionId, activity.id, activity.costMinutes)
 
+    await this.leisureRepository.saveSession(session)
+
     return { session }
   }
 }
