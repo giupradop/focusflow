@@ -19,6 +19,7 @@ interface TaskProps {
   recurPaused: boolean
   sessions: Session[]
   completedAt?: Date
+  spentSeconds?: number
 }
 
 export class Task extends Entity<number> {
@@ -36,6 +37,10 @@ export class Task extends Entity<number> {
       archived: false,
       sessions: [],
     })
+  }
+
+  static restore(id: number, props: TaskProps): Task {
+    return new Task(id, props)
   }
 
   // ── regras de negócio ──
@@ -91,14 +96,14 @@ export class Task extends Entity<number> {
 
   completeSession(session: Session): void {
     session.complete()
-    this.props.sessions.push(session)
+    this.props.spentSeconds = (this.props.spentSeconds ?? 0) + session.durationSeconds
     this.props.status = TaskStatus.DONE
     this.props.completedAt = new Date()
   }
 
   saveSession(session: Session): void {
     session.complete()
-    this.props.sessions.push(session)
+    this.props.spentSeconds = (this.props.spentSeconds ?? 0) + session.durationSeconds
     this.props.status = TaskStatus.PAUSED
   }
 
@@ -164,7 +169,8 @@ export class Task extends Entity<number> {
   get sessions() { return this.props.sessions }
   get completedAt() { return this.props.completedAt }
   get totalSpentSeconds(): number {
-    return this.props.sessions.reduce((acc, s) => acc + s.durationSeconds, 0)
+    const fromSessions = this.props.sessions.reduce((acc, s) => acc + s.durationSeconds, 0)
+    return fromSessions + (this.props.spentSeconds ?? 0)
   }
   get remainingSeconds(): number {
     return this.props.estimatedMinutes * 60 - this.totalSpentSeconds

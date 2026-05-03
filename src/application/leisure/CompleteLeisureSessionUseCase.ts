@@ -1,39 +1,28 @@
 import { LeisureSession } from '../../domain/leisure/LeisureSession'
 import type { ILeisureRepository } from '../../domain/leisure/ILeisureRepository'
 
-type StartLeisureSessionInput = {
-  activityId: number
-}
-
-type StartLeisureSessionOutput = {
+type CompleteLeisureSessionInput = {
   session: LeisureSession
 }
 
-export class StartLeisureSessionUseCase {
+export class CompleteLeisureSessionUseCase {
   private leisureRepository: ILeisureRepository
 
   constructor(leisureRepository: ILeisureRepository) {
     this.leisureRepository = leisureRepository
   }
 
-  async execute(input: StartLeisureSessionInput): Promise<StartLeisureSessionOutput> {
-    const activity = await this.leisureRepository.findActivityById(input.activityId)
+  async execute(input: CompleteLeisureSessionInput): Promise<void> {
+    const session = input.session
 
-    if (!activity) {
-      throw new Error(`Atividade ${input.activityId} não encontrada`)
+    if (!session.isCompleted) {
+      session.complete()
     }
 
     const bank = await this.leisureRepository.findBank()
 
-    if (!bank.canAfford(activity.costMinutes)) {
-      throw new Error('Saldo insuficiente no banco de lazer')
-    }
+    bank.withdraw(session)
 
-    const sessionId = Date.now()
-    const session = LeisureSession.create(sessionId, activity.id, activity.costMinutes)
-
-    await this.leisureRepository.saveSession(session)
-
-    return { session }
+    await this.leisureRepository.saveBank(bank)
   }
 }

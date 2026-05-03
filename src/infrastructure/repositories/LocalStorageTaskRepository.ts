@@ -21,31 +21,28 @@ export class LocalStorageTaskRepository implements ITaskRepository {
       recurDays: task.recurDays,
       recurPaused: task.recurPaused,
       completedAt: task.completedAt?.toISOString(),
-      sessions: task.sessions.map(s => ({
-        id: s.id,
-        taskId: s.taskId,
-        startedAt: s.startedAt.toISOString(),
-        endedAt: s.endedAt?.toISOString(),
-        durationSeconds: s.durationSeconds,
-        pausedSeconds: s.pausedSeconds,
-      })),
+      spentSeconds: task.totalSpentSeconds,
     }
   }
 
   private deserialize(data: any): Task {
-    const task = Task.create(data.id, {
+    return Task.restore(data.id, {
       name: data.name,
       category: data.category,
       priority: Priority.create(data.priority),
+      status: data.status,
       createdAt: new Date(data.createdAt),
       dueDate: new Date(data.dueDate),
       estimatedMinutes: data.estimatedMinutes,
       notes: data.notes,
-      recurrent: data.recurrent,
-      recurDays: data.recurDays,
-      recurPaused: data.recurPaused,
+      archived: data.archived ?? false,
+      recurrent: data.recurrent ?? false,
+      recurDays: data.recurDays ?? [],
+      recurPaused: data.recurPaused ?? false,
+      sessions: [],
+      completedAt: data.completedAt ? new Date(data.completedAt) : undefined,
+      spentSeconds: data.spentSeconds ?? 0,
     })
-    return task
   }
 
   private load(): Task[] {
