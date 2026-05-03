@@ -29,47 +29,53 @@ export function ResumoPage() {
     return `semana desafiadora — ${rate}% concluído. não desanime. revise o que te travou e ajuste o plano.`
   }
 
+  const border = '.5px solid rgba(255,255,255,0.08)'
+
   const stats = [
-    { label: 'concluídas', val: `${done.length} / ${weekly.length}` },
-    { label: 'tempo de foco', val: formatMinutes(focusMin) },
-    { label: 'lazer ganho', val: formatMinutes(earned), pink: true },
-    { label: 'taxa', val: `${rate}%` },
-    { label: 'banco de lazer', val: formatMinutes(balanceMin), pink: true },
-    { label: 'streak', val: '3 dias' },
+    { label: 'concluídas',     val: `${done.length} / ${weekly.length}`, pink: false },
+    { label: 'tempo de foco',  val: formatMinutes(focusMin),              pink: false },
+    { label: 'lazer ganho',    val: formatMinutes(earned),                pink: true  },
+    { label: 'taxa',           val: `${rate}%`,                           pink: false },
+    { label: 'banco de lazer', val: formatMinutes(balanceMin),            pink: true  },
+    { label: 'streak',         val: '3 dias',                             pink: false },
   ]
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="px-7 pt-6 pb-4 border-b border-[var(--border)] bg-[var(--bg)] sticky top-0 z-10">
-        <div>
-          <h1 className="text-2xl font-medium">resumo semanal</h1>
-          <p className="text-sm text-[var(--muted)] mt-1">
-            {formatShortDate(start)} a {formatShortDate(end)}
-          </p>
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+
+      {/* header */}
+      <div style={{ padding: '1.5rem 1.75rem 1rem', borderBottom: border, background: '#1a1a1a', position: 'sticky', top: 0, zIndex: 10 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 500 }}>resumo semanal</h1>
+        <p style={{ fontSize: 16, color: '#888', marginTop: 4 }}>
+          {formatShortDate(start)} a {formatShortDate(end)}
+        </p>
       </div>
 
-      <div className="px-7 py-6 flex-1">
-        <div className="bg-[var(--bg2)] rounded-2xl p-6">
-          <div className="text-lg font-medium mb-1">semana atual</div>
-          <div className="text-sm text-[var(--muted)] mb-6">
+      <div style={{ padding: '1.5rem 1.75rem', flex: 1 }}>
+        <div style={{ background: '#222', borderRadius: 16, border, padding: '1.75rem' }}>
+
+          <div style={{ fontSize: 20, fontWeight: 500, marginBottom: 4 }}>semana atual</div>
+          <div style={{ fontSize: 15, color: '#888', marginBottom: 24 }}>
             {formatShortDate(start)} a {formatShortDate(end)}
           </div>
 
-          <div className="grid grid-cols-3 gap-3 mb-6">
+          {/* grid de stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
             {stats.map(s => (
-              <div key={s.label} className="bg-[var(--bg3)] rounded-xl p-4">
-                <div className="text-xs text-[var(--muted)] mb-1">{s.label}</div>
-                <div className={`text-xl font-medium ${s.pink ? 'text-[var(--pink-400)]' : ''}`}>
+              <div key={s.label} style={{ background: '#2a2a2a', borderRadius: 12, border, padding: '1rem 1.25rem' }}>
+                <div style={{ fontSize: 15, color: '#888', marginBottom: 6 }}>{s.label}</div>
+                <div style={{ fontSize: 22, fontWeight: 500, color: s.pink ? '#ED93B1' : '#f0f0f0' }}>
                   {s.val}
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="bg-[var(--pink-900)] border border-[var(--pink-800)] rounded-xl p-4 text-sm text-[var(--pink-100)] leading-relaxed">
+          {/* mensagem motivacional */}
+          <div style={{ background: '#4B1528', border: '.5px solid #72243E', borderRadius: 12, padding: '1rem 1.25rem', fontSize: 16, color: '#F4C2D4', lineHeight: 1.6 }}>
             {getMessage()}
           </div>
+
         </div>
       </div>
     </div>

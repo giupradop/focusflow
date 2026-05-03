@@ -15,9 +15,7 @@ export function EstatisticasPage() {
   const [from, setFrom] = useState(new Date().toISOString().slice(0, 10))
   const [to, setTo] = useState(new Date().toISOString().slice(0, 10))
 
-  useEffect(() => {
-    loadWeek(0)
-  }, [])
+  useEffect(() => { loadWeek(0) }, [])
 
   function getRange(): { start: Date, end: Date } {
     if (period === 'week') return getWeekRange(0)
@@ -60,121 +58,122 @@ export function EstatisticasPage() {
   }))
   const maxPri = Math.max(...byPri.map(x => x.cnt), 1)
 
-  const priColor: Record<string, string> = {
-    alta: 'bg-[var(--red)]',
-    média: 'bg-[var(--amber)]',
-    baixa: 'bg-[var(--muted)]',
+  const priColor: Record<string, string> = { alta: '#E24B4A', média: '#E8A838', baixa: '#888' }
+
+  const border = '.5px solid rgba(255,255,255,0.08)'
+  const cardStyle: React.CSSProperties = {
+    background: '#222', borderRadius: 12,
+    border, padding: '1.25rem 1.5rem',
+  }
+  const sectionLabel: React.CSSProperties = {
+    fontSize: 13, color: '#888', textTransform: 'uppercase',
+    letterSpacing: '.06em', marginBottom: 16, fontWeight: 500,
+  }
+  const inputStyle: React.CSSProperties = {
+    background: '#2a2a2a', border, borderRadius: 8,
+    padding: '7px 12px', fontSize: 15, color: '#f0f0f0',
+    outline: 'none',
   }
 
-  const inputCls = 'bg-[var(--bg3)] border border-[var(--border2)] rounded-lg px-3 py-1.5 text-xs text-[var(--text)] outline-none'
+  function BarRow({ label, mins, max, color = '#D4537E', fmt = true }: {
+    label: string, mins: number, max: number, color?: string, fmt?: boolean
+  }) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+        <span style={{ fontSize: 15, color: '#888', width: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+        <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 99 }}>
+          <div style={{ height: 4, background: color, borderRadius: 99, width: `${Math.round(mins / max * 100)}%`, transition: 'width .4s ease' }} />
+        </div>
+        <span style={{ fontSize: 15, color: '#888', width: 48, textAlign: 'right' }}>
+          {fmt ? formatMinutes(mins) : mins}
+        </span>
+      </div>
+    )
+  }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="px-7 pt-6 pb-4 border-b border-[var(--border)] bg-[var(--bg)] sticky top-0 z-10">
-        <div>
-          <h1 className="text-2xl font-medium">estatísticas</h1>
-          <p className="text-sm text-[var(--muted)] mt-1">acompanhe seu progresso</p>
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+
+      {/* header */}
+      <div style={{ padding: '1.5rem 1.75rem 1rem', borderBottom: border, background: '#1a1a1a', position: 'sticky', top: 0, zIndex: 10 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 500 }}>estatísticas</h1>
+        <p style={{ fontSize: 16, color: '#888', marginTop: 4 }}>acompanhe seu progresso</p>
       </div>
 
-      <div className="px-7 py-6 flex-1 flex flex-col gap-5">
+      <div style={{ padding: '1.5rem 1.75rem', flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {/* filtro de período */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           {(['week', 'month', 'custom'] as Period[]).map(p => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 rounded-lg text-xs border cursor-pointer transition-colors
-                ${period === p
-                  ? 'bg-[var(--pink-900)] text-[var(--pink-200)] border-[var(--pink-800)]'
-                  : 'bg-[var(--bg3)] text-[var(--muted)] border-[var(--border2)] hover:text-[var(--text)]'
-                }`}
+              style={{
+                padding: '8px 18px', borderRadius: 8, fontSize: 15, cursor: 'pointer',
+                background: period === p ? '#4B1528' : 'transparent',
+                color: period === p ? '#ED93B1' : '#888',
+                border: period === p ? '.5px solid #72243E' : border,
+                fontWeight: period === p ? 500 : 400,
+                transition: 'all .15s',
+              }}
             >
               {p === 'week' ? 'esta semana' : p === 'month' ? 'este mês' : 'personalizado'}
             </button>
           ))}
           {period === 'custom' && (
             <>
-              <input type="date" className={inputCls} value={from} onChange={e => setFrom(e.target.value)} />
-              <span className="text-xs text-[var(--muted)]">até</span>
-              <input type="date" className={inputCls} value={to} onChange={e => setTo(e.target.value)} />
+              <input type="date" style={inputStyle} value={from} onChange={e => setFrom(e.target.value)} />
+              <span style={{ fontSize: 15, color: '#888' }}>até</span>
+              <input type="date" style={inputStyle} value={to} onChange={e => setTo(e.target.value)} />
             </>
           )}
         </div>
 
-        {/* cards */}
-        <div className="grid grid-cols-4 gap-3">
+        {/* cards de resumo */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
           {[
-            { label: 'tarefas concluídas', val: done.length, color: '' },
-            { label: 'tempo de foco', val: formatMinutes(focusMin), color: '' },
-            { label: 'lazer ganho', val: formatMinutes(earned), color: 'text-[var(--pink-400)]' },
-            { label: 'taxa de conclusão', val: `${rate}%`, color: '' },
+            { label: 'tarefas concluídas', val: done.length, color: '#f0f0f0' },
+            { label: 'tempo de foco', val: formatMinutes(focusMin), color: '#f0f0f0' },
+            { label: 'lazer ganho', val: formatMinutes(earned), color: '#ED93B1' },
+            { label: 'taxa de conclusão', val: `${rate}%`, color: '#f0f0f0' },
           ].map(c => (
-            <div key={c.label} className="bg-[var(--bg2)] rounded-xl p-4">
-              <div className="text-xs text-[var(--muted)] mb-1">{c.label}</div>
-              <div className={`text-2xl font-medium ${c.color}`}>{c.val}</div>
+            <div key={c.label} style={cardStyle}>
+              <div style={{ fontSize: 15, color: '#888', marginBottom: 6 }}>{c.label}</div>
+              <div style={{ fontSize: 28, fontWeight: 500, color: c.color }}>{c.val}</div>
             </div>
           ))}
         </div>
 
-        {/* gráficos */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-[var(--bg2)] rounded-xl p-5">
-            <div className="text-xs text-[var(--muted)] uppercase tracking-wider mb-4">foco por categoria</div>
-            {byCat.length === 0 ? (
-              <div className="text-sm text-[var(--muted)]">sem dados</div>
-            ) : byCat.map(x => (
-              <div key={x.cat} className="flex items-center gap-2 mb-2">
-                <span className="text-xs text-[var(--muted)] w-32 truncate">{x.cat}</span>
-                <div className="flex-1 h-1.5 bg-[var(--bg4)] rounded-full">
-                  <div className="h-1.5 bg-[var(--pink-400)] rounded-full" style={{ width: `${Math.round(x.mins / maxCat * 100)}%` }} />
-                </div>
-                <span className="text-xs w-10 text-right">{formatMinutes(x.mins)}</span>
-              </div>
-            ))}
+        {/* gráficos linha 1 */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div style={cardStyle}>
+            <div style={sectionLabel}>foco por categoria</div>
+            {byCat.length === 0
+              ? <div style={{ fontSize: 16, color: '#888' }}>sem dados</div>
+              : byCat.map(x => <BarRow key={x.cat} label={x.cat} mins={x.mins} max={maxCat} color="#D4537E" />)
+            }
           </div>
 
-          <div className="bg-[var(--bg2)] rounded-xl p-5">
-            <div className="text-xs text-[var(--muted)] uppercase tracking-wider mb-4">lazer por atividade</div>
-            {activities.length === 0 ? (
-              <div className="text-sm text-[var(--muted)]">sem dados</div>
-            ) : activities.map(a => (
-              <div key={a.id} className="flex items-center gap-2 mb-2">
-                <span className="text-xs text-[var(--muted)] w-32 truncate">{a.name}</span>
-                <div className="flex-1 h-1.5 bg-[var(--bg4)] rounded-full">
-                  <div className="h-1.5 bg-[var(--green)] rounded-full" style={{ width: '0%' }} />
-                </div>
-                <span className="text-xs w-10 text-right text-[var(--green)]">0m</span>
-              </div>
-            ))}
+          <div style={cardStyle}>
+            <div style={sectionLabel}>lazer por atividade</div>
+            {activities.length === 0
+              ? <div style={{ fontSize: 16, color: '#888' }}>sem dados</div>
+              : activities.map(a => <BarRow key={a.id} label={a.name} mins={0} max={1} color="#5DCAA5" />)
+            }
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-[var(--bg2)] rounded-xl p-5">
-            <div className="text-xs text-[var(--muted)] uppercase tracking-wider mb-4">tarefas por dia</div>
-            {byDay.map(x => (
-              <div key={x.d} className="flex items-center gap-2 mb-2">
-                <span className="text-xs text-[var(--muted)] w-8">{x.d}</span>
-                <div className="flex-1 h-1.5 bg-[var(--bg4)] rounded-full">
-                  <div className="h-1.5 bg-[var(--pink-400)] rounded-full" style={{ width: `${Math.round(x.cnt / maxDay * 100)}%` }} />
-                </div>
-                <span className="text-xs w-6 text-right">{x.cnt}</span>
-              </div>
-            ))}
+        {/* gráficos linha 2 */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div style={cardStyle}>
+            <div style={sectionLabel}>tarefas por dia</div>
+            {byDay.map(x => <BarRow key={x.d} label={x.d} mins={x.cnt} max={maxDay} color="#D4537E" fmt={false} />)}
           </div>
 
-          <div className="bg-[var(--bg2)] rounded-xl p-5">
-            <div className="text-xs text-[var(--muted)] uppercase tracking-wider mb-4">concluídas por prioridade</div>
+          <div style={cardStyle}>
+            <div style={sectionLabel}>concluídas por prioridade</div>
             {byPri.map(x => (
-              <div key={x.p} className="flex items-center gap-2 mb-2">
-                <span className="text-xs text-[var(--muted)] w-12">{x.p}</span>
-                <div className="flex-1 h-1.5 bg-[var(--bg4)] rounded-full">
-                  <div className={`h-1.5 rounded-full ${priColor[x.p]}`} style={{ width: `${Math.round(x.cnt / maxPri * 100)}%` }} />
-                </div>
-                <span className="text-xs w-6 text-right">{x.cnt}</span>
-              </div>
+              <BarRow key={x.p} label={x.p} mins={x.cnt} max={maxPri} color={priColor[x.p]} fmt={false} />
             ))}
           </div>
         </div>

@@ -42,7 +42,10 @@ export function Badge({ label, variant, value }: BadgeProps) {
   const color = colorMap[variant][value] ?? 'bg-[var(--bg4)] text-[var(--muted)]'
 
   return (
-    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${color}`}>
+    <span
+      style={{ fontSize: 16, padding: '3px 10px', borderRadius: 10, fontWeight: 500, whiteSpace: 'nowrap', display: 'inline-flex' }}
+      className={color}
+    >
       {label}
     </span>
   )

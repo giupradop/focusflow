@@ -10,13 +10,11 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose()
-      }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="bg-[var(--bg2)] border border-[var(--border2)] rounded-2xl p-7 w-[560px] max-w-[95vw] max-h-[90vh] overflow-y-auto">
-        <div className="text-base font-medium mb-6">{title}</div>
+      <div style={{ background: '#222', border: '.5px solid rgba(255,255,255,0.15)', borderRadius: 14, padding: '1.75rem', width: 560, maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div style={{ fontSize: 17, fontWeight: 500, marginBottom: '1.5rem' }}>{title}</div>
         {children}
       </div>
     </div>

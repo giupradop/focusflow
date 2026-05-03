@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useTaskStore } from '../../store/useTaskStore'
 import { useAppStore } from '../../store/useAppStore'
 import { formatSeconds, formatMinutes } from '../../../utils/formatTime'
-import { Button } from '../ui/Button'
 import type { Task } from '../../../domain/task/Task'
 import { Session } from '../../../domain/task/Session'
 import { useLeisureStore } from '../../store/useLeisureStore'
@@ -71,48 +70,83 @@ export function FocusTimerCard({ task, onClose }: FocusTimerCardProps) {
   }
 
   const isOver = seconds < 0
-  const timerColor = isOver ? 'text-[var(--red)]' : 'text-[var(--pink-200)]'
-  const fillColor = isOver ? 'bg-[var(--red)]' : 'bg-[var(--pink-400)]'
+  const timerColor = isOver ? '#E24B4A' : '#ED93B1'
+  const fillColor = isOver ? '#E24B4A' : '#D4537E'
   const pct = Math.min(100, Math.round(((task.estimatedMinutes * 60 - seconds) / (task.estimatedMinutes * 60)) * 100))
 
+  const btnBase: React.CSSProperties = {
+    padding: '8px 18px', borderRadius: 8, fontSize: 15,
+    fontWeight: 500, cursor: 'pointer', border: 'none',
+  }
+
   return (
-    <div className="bg-[var(--pink-900)] border border-[var(--pink-800)] rounded-xl p-5 mb-5">
-      <div className="flex items-start justify-between mb-3">
+    <div style={{ background: '#4B1528', border: '.5px solid #72243E', borderRadius: 12, padding: '1.25rem', marginBottom: '1.25rem' }}>
+
+      {/* top */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
         <div>
-          <div className="text-base font-medium text-[var(--pink-100)]">{task.name}</div>
-          <div className="text-xs text-[var(--pink-400)] mt-1">
+          <div style={{ fontSize: 17, fontWeight: 500, color: '#F4C0D1' }}>{task.name}</div>
+          <div style={{ fontSize: 13, color: '#D4537E', marginTop: 4 }}>
             {task.category} · estimado {formatMinutes(task.estimatedMinutes)} · vence {task.dueDate.toLocaleDateString('pt-BR')}
             {task.totalSpentSeconds > 0 && ` · anterior: ${formatMinutes(task.totalSpentSeconds / 60)}`}
           </div>
         </div>
-        <span className="text-xs bg-[var(--pink-800)] text-[var(--pink-200)] px-2 py-1 rounded-full">em andamento</span>
+        <span style={{ fontSize: 13, background: '#72243E', color: '#ED93B1', padding: '3px 10px', borderRadius: 20 }}>
+          em andamento
+        </span>
       </div>
 
-      <div className="flex items-center gap-4 my-3">
-        <div className={`text-[40px] font-medium font-mono ${timerColor}`}>
+      {/* timer */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '12px 0' }}>
+        <div style={{ fontSize: 44, fontWeight: 500, fontVariantNumeric: 'tabular-nums', color: timerColor, letterSpacing: '.02em', minWidth: 140 }}>
           {formatSeconds(seconds)}
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button label={isRunning ? 'pausar' : 'retomar'} onClick={handlePause} variant="secondary" />
-          <Button label="concluir sessão" onClick={handleComplete} />
-          <Button label="continuar depois" onClick={handleLater} variant="secondary" />
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button
+            onClick={handlePause}
+            style={{ ...btnBase, background: '#993556', color: '#fff' }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#72243E'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = '#993556'}
+          >
+            {isRunning ? 'pausar' : 'retomar'}
+          </button>
+          <button
+            onClick={handleComplete}
+            style={{ ...btnBase, background: '#D4537E', color: '#fff' }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#993556'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = '#D4537E'}
+          >
+            concluir sessão
+          </button>
+          <button
+            onClick={handleLater}
+            style={{ ...btnBase, background: '#333', color: '#888' }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#f0f0f0'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#888'}
+          >
+            continuar depois
+          </button>
         </div>
       </div>
 
-      <div className="h-1 bg-[var(--pink-800)] rounded-full mt-2">
-        <div className={`h-1 rounded-full transition-all ${fillColor}`} style={{ width: `${pct}%` }} />
+      {/* progress */}
+      <div style={{ height: 4, background: '#72243E', borderRadius: 2, marginTop: 8 }}>
+        <div style={{ height: 4, background: fillColor, borderRadius: 2, width: `${pct}%`, transition: 'width .5s' }} />
       </div>
-      <div className="flex justify-between text-xs text-[var(--pink-500)] mt-1.5">
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#993556', marginTop: 6 }}>
         <span>pausa: {formatMinutes(pausedSeconds / 60)}</span>
         <span>{isOver ? `excedeu ${formatMinutes(-seconds / 60)}` : `${pct}% concluído`} · total: {formatMinutes((task.totalSpentSeconds + (task.estimatedMinutes * 60 - seconds)) / 60)}</span>
       </div>
 
-      <div className="mt-4 border-t border-[var(--pink-800)] pt-3">
-        <div className="text-[10px] text-[var(--pink-400)] uppercase tracking-wider mb-1.5">observações</div>
+      {/* observações */}
+      <div style={{ marginTop: 16, borderTop: '.5px solid #72243E', paddingTop: 12 }}>
+        <div style={{ fontSize: 11, color: '#D4537E', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>observações</div>
         <textarea
-          className="w-full bg-white/5 border border-[var(--pink-800)] rounded-lg px-3 py-2 text-xs text-[var(--pink-100)] outline-none focus:border-[var(--pink-400)] resize-y min-h-[56px] leading-relaxed font-inherit placeholder:text-[var(--pink-800)]"
+          style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '.5px solid #72243E', borderRadius: 8, padding: '8px 12px', fontSize: 14, color: '#F4C0D1', outline: 'none', resize: 'vertical', minHeight: 60, lineHeight: 1.5, fontFamily: 'inherit' }}
           placeholder="anote dúvidas, progresso, próximos passos..."
           defaultValue={task.notes}
+          onFocus={e => (e.currentTarget as HTMLElement).style.borderColor = '#D4537E'}
+          onBlur={e => (e.currentTarget as HTMLElement).style.borderColor = '#72243E'}
         />
       </div>
     </div>

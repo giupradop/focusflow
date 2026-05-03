@@ -8,9 +8,7 @@ export function ArquivoPage() {
   const { archivedTasks, loadArchived, restoreTask } = useTaskStore()
   const { showToast } = useAppStore()
 
-  useEffect(() => {
-    loadArchived()
-  }, [])
+  useEffect(() => { loadArchived() }, [])
 
   async function handleRestore(id: number) {
     await restoreTask(id)
@@ -18,56 +16,66 @@ export function ArquivoPage() {
     loadArchived()
   }
 
-  const paused = archivedTasks.filter(t => t.recurrent && t.recurPaused)
+  const paused   = archivedTasks.filter(t => t.recurrent && t.recurPaused)
   const archived = archivedTasks.filter(t => t.archived)
 
+  const border  = '.5px solid rgba(255,255,255,0.08)'
+  const cardStyle: React.CSSProperties = { background: '#222', borderRadius: 12, border, padding: '1.25rem 1.5rem', marginBottom: 16 }
+  const sectionLabel: React.CSSProperties = { fontSize: 13, color: '#888', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 16, fontWeight: 500 }
+  const thStyle: React.CSSProperties = { fontSize: 13, color: '#888', fontWeight: 500, textAlign: 'left', padding: '8px 12px', borderBottom: border, letterSpacing: '.04em', textTransform: 'uppercase', whiteSpace: 'nowrap' }
+  const tdStyle: React.CSSProperties = { padding: '14px 12px', borderBottom: border, fontSize: 17, verticalAlign: 'middle' }
+
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="px-7 pt-6 pb-4 border-b border-[var(--border)] bg-[var(--bg)] sticky top-0 z-10">
-        <div>
-          <h1 className="text-2xl font-medium">arquivo</h1>
-          <p className="text-sm text-[var(--muted)] mt-1">tarefas arquivadas e recorrências pausadas</p>
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+
+      {/* header */}
+      <div style={{ padding: '1.5rem 1.75rem 1rem', borderBottom: border, background: '#1a1a1a', position: 'sticky', top: 0, zIndex: 10 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 500 }}>arquivo</h1>
+        <p style={{ fontSize: 16, color: '#888', marginTop: 4 }}>tarefas arquivadas e recorrências pausadas</p>
       </div>
 
-      <div className="px-7 py-6 flex-1">
+      <div style={{ padding: '1.5rem 1.75rem', flex: 1 }}>
 
         {/* tarefas arquivadas */}
-        <div className="bg-[var(--bg2)] rounded-xl p-5 mb-4">
-          <div className="text-xs text-[var(--muted)] uppercase tracking-wider mb-4">
-            tarefas arquivadas ({archived.length})
-          </div>
+        <div style={cardStyle}>
+          <div style={sectionLabel}>tarefas arquivadas ({archived.length})</div>
           {archived.length === 0 ? (
-            <div className="text-sm text-[var(--muted)]">nenhuma tarefa arquivada</div>
+            <div style={{ fontSize: 16, color: '#888' }}>nenhuma tarefa arquivada</div>
           ) : (
-            <table className="w-full border-collapse">
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  <th className="text-left text-xs text-[var(--muted)] font-medium px-2.5 py-1.5 border-b border-[var(--border)] uppercase tracking-wider">tarefa</th>
-                  <th className="text-left text-xs text-[var(--muted)] font-medium px-2.5 py-1.5 border-b border-[var(--border)] uppercase tracking-wider w-32">categoria</th>
-                  <th className="text-left text-xs text-[var(--muted)] font-medium px-2.5 py-1.5 border-b border-[var(--border)] uppercase tracking-wider w-20">criação</th>
-                  <th className="w-24"></th>
+                  <th style={thStyle}>tarefa</th>
+                  <th style={{ ...thStyle, width: 160 }}>categoria</th>
+                  <th style={{ ...thStyle, width: 90 }}>criação</th>
+                  <th style={{ ...thStyle, width: 100 }}></th>
                 </tr>
               </thead>
               <tbody>
                 {archived.map(task => (
-                  <tr key={task.id} className="border-b border-[var(--border)] hover:bg-[var(--bg3)] transition-colors">
-                    <td className="px-2.5 py-2.5">
-                      <div className="font-medium text-sm">{task.name}</div>
+                  <tr
+                    key={task.id}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#2a2a2a'}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+                  >
+                    <td style={tdStyle}>
+                      <div style={{ fontWeight: 500, fontSize: 17 }}>{task.name}</div>
                       {task.notes && (
-                        <div className="text-xs text-[var(--muted)] mt-0.5">{task.notes}</div>
+                        <div style={{ fontSize: 14, color: '#888', marginTop: 2 }}>{task.notes}</div>
                       )}
                     </td>
-                    <td className="px-2.5 py-2.5">
+                    <td style={tdStyle}>
                       <Badge label={task.category} variant="category" value={task.category as any} />
                     </td>
-                    <td className="px-2.5 py-2.5 text-xs text-[var(--muted)]">
+                    <td style={{ ...tdStyle, fontSize: 15, color: '#888' }}>
                       {formatShortDate(task.createdAt)}
                     </td>
-                    <td className="px-2.5 py-2.5">
+                    <td style={tdStyle}>
                       <button
                         onClick={() => handleRestore(task.id)}
-                        className="text-xs px-3 py-1.5 rounded-lg border border-[var(--border2)] bg-transparent text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg3)] cursor-pointer transition-colors"
+                        style={{ fontSize: 15, padding: '6px 14px', borderRadius: 8, border, background: 'transparent', color: '#888', cursor: 'pointer' }}
+                        onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = '#2a2a2a'; el.style.color = '#f0f0f0' }}
+                        onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.color = '#888' }}
                       >
                         restaurar
                       </button>
@@ -80,35 +88,37 @@ export function ArquivoPage() {
         </div>
 
         {/* recorrências pausadas */}
-        <div className="bg-[var(--bg2)] rounded-xl p-5">
-          <div className="text-xs text-[var(--muted)] uppercase tracking-wider mb-4">
-            recorrências pausadas ({paused.length})
-          </div>
+        <div style={{ ...cardStyle, marginBottom: 0 }}>
+          <div style={sectionLabel}>recorrências pausadas ({paused.length})</div>
           {paused.length === 0 ? (
-            <div className="text-sm text-[var(--muted)]">nenhuma recorrência pausada</div>
-          ) : (
-            paused.map(task => (
-              <div key={task.id} className="flex items-center justify-between py-3 border-b border-[var(--border)] last:border-0">
-                <div>
-                  <div className="text-sm font-medium">{task.name}</div>
-                  <div className="text-xs text-[var(--muted)] mt-0.5">
-                    {task.recurDays.map(d => ['dom','seg','ter','qua','qui','sex','sáb'][d]).join(', ')}
-                  </div>
+            <div style={{ fontSize: 16, color: '#888' }}>nenhuma recorrência pausada</div>
+          ) : paused.map((task, i) => (
+            <div
+              key={task.id}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: i < paused.length - 1 ? border : 'none' }}
+            >
+              <div>
+                <div style={{ fontSize: 17, fontWeight: 500 }}>{task.name}</div>
+                <div style={{ fontSize: 14, color: '#888', marginTop: 3 }}>
+                  {task.recurDays.map((d: number) => ['dom','seg','ter','qua','qui','sex','sáb'][d]).join(', ')}
                 </div>
-                <button
-                  onClick={async () => {
-                    await useTaskStore.getState().resumeRecurrence(task.id)
-                    showToast('recorrência retomada!')
-                    loadArchived()
-                  }}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-[var(--pink-400)] text-white border-none cursor-pointer hover:bg-[var(--pink-500)] transition-colors"
-                >
-                  retomar
-                </button>
               </div>
-            ))
-          )}
+              <button
+                onClick={async () => {
+                  await useTaskStore.getState().resumeRecurrence(task.id)
+                  showToast('recorrência retomada!')
+                  loadArchived()
+                }}
+                style={{ fontSize: 15, padding: '8px 18px', borderRadius: 8, background: '#D4537E', color: '#fff', border: 'none', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#c4476e'}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = '#D4537E'}
+              >
+                retomar
+              </button>
+            </div>
+          ))}
         </div>
+
       </div>
     </div>
   )

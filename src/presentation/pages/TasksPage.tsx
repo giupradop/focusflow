@@ -3,7 +3,6 @@ import { useTaskStore } from '../store/useTaskStore'
 import { useAppStore } from '../store/useAppStore'
 import { useWeekNavigation } from '../hooks/useWeekNavigation'
 import { Badge } from '../components/ui/Badge'
-import { Button } from '../components/ui/Button'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { formatMinutes } from '../../utils/formatTime'
 import { formatShortDate } from '../../utils/formatDate'
@@ -15,23 +14,25 @@ import { FocusTimerCard } from '../components/task/FocusTimerCard'
 type SortCol = 'priority' | 'due' | 'est' | 'spent' | null
 type FilterTab = 'todas' | 'pendente' | 'em andamento' | 'pausada' | 'concluída' | 'atrasada'
 
+const filters: FilterTab[] = ['todas', 'pendente', 'em andamento', 'pausada', 'concluída', 'atrasada']
+
 export function TasksPage() {
   const { tasks, carriedTasks, loadWeek, archiveTask, createTask, updateTask } = useTaskStore()
   const { showToast } = useAppStore()
   const { weekOffset, weekLabel, goToPrevWeek, goToNextWeek } = useWeekNavigation()
+  const { curCategory } = useAppStore()
 
   const [filter, setFilter] = useState<FilterTab>('todas')
   const [sortCol, setSortCol] = useState<SortCol>(null)
   const [sortDir, setSortDir] = useState<1 | -1>(1)
   const [confirmId, setConfirmId] = useState<number | null>(null)
-
   const [showForm, setShowForm] = useState(false)
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
 
   useEffect(() => {
-    loadWeek(weekOffset)
-  }, [weekOffset])
+    loadWeek(weekOffset, curCategory as any)
+  }, [weekOffset, curCategory])
 
   function handleSort(col: SortCol) {
     if (sortCol === col) setSortDir(d => d === 1 ? -1 : 1)
@@ -52,14 +53,11 @@ export function TasksPage() {
         va = o[a.priority.toString()] ?? 3
         vb = o[b.priority.toString()] ?? 3
       } else if (sortCol === 'due') {
-        va = a.dueDate.getTime()
-        vb = b.dueDate.getTime()
+        va = a.dueDate.getTime(); vb = b.dueDate.getTime()
       } else if (sortCol === 'est') {
-        va = a.estimatedMinutes
-        vb = b.estimatedMinutes
+        va = a.estimatedMinutes; vb = b.estimatedMinutes
       } else {
-        va = a.totalSpentSeconds
-        vb = b.totalSpentSeconds
+        va = a.totalSpentSeconds; vb = b.totalSpentSeconds
       }
       return (va - vb) * sortDir
     })
@@ -74,10 +72,6 @@ export function TasksPage() {
   const allTasks = [...tasks, ...carriedTasks]
   const filtered = applySort(applyFilter(allTasks))
 
-  const filters: FilterTab[] = ['todas', 'pendente', 'em andamento', 'pausada', 'concluída', 'atrasada']
-
-  function handleArchive(id: number) { setConfirmId(id) }
-
   async function confirmArchive() {
     if (!confirmId) return
     await archiveTask(confirmId)
@@ -85,36 +79,62 @@ export function TasksPage() {
     showToast('tarefa arquivada')
   }
 
+  const thStyle: React.CSSProperties = {
+    fontSize: 15, color: '#888', fontWeight: 500, textAlign: 'left',
+    padding: '10px 16px', borderBottom: '.5px solid rgba(255,255,255,0.08)',
+    letterSpacing: '.04em', textTransform: 'uppercase', whiteSpace: 'nowrap',
+  }
+  const tdStyle: React.CSSProperties = {
+    padding: '15px 16px', borderBottom: '.5px solid rgba(255,255,255,0.08)',
+    fontSize: 17, verticalAlign: 'middle',
+  }
+
   return (
-    <div className="flex flex-col min-h-screen">
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+
       {/* header */}
-      <div className="px-7 pt-6 pb-0 border-b border-[var(--border)] bg-[var(--bg)] sticky top-0 z-10">
-        <div className="flex items-start justify-between mb-4">
+      <div style={{ padding: '1.5rem 1.75rem 0', borderBottom: '.5px solid rgba(255,255,255,0.08)', background: '#1a1a1a', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1rem' }}>
           <div>
-            <h1 className="text-2xl font-medium">todas as tasks</h1>
-            <p className="text-sm text-[var(--muted)] mt-1">{allTasks.length} tarefa(s) nesta semana</p>
+            <h1 style={{ fontSize: 28, fontWeight: 500 }}>
+              {curCategory ?? 'todas as tasks'}
+            </h1>
+            <p style={{ fontSize: 16, color: '#888', marginTop: 4 }}>{allTasks.length} tarefa(s) nesta semana</p>
           </div>
-          <Button label="+ nova task" onClick={() => setShowForm(true)} />
+          <button
+            onClick={() => setShowForm(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', background: '#D4537E', color: '#fff', border: 'none', borderRadius: 8, fontSize: 18, fontWeight: 500, cursor: 'pointer' }}
+          >
+            + nova task
+          </button>
         </div>
 
         {/* week nav */}
-        <div className="flex items-center gap-2 mb-4">
-          <button onClick={goToPrevWeek} className="wbtn">←</button>
-          <span className="text-sm font-medium min-w-[200px] text-center">{weekLabel}</span>
-          <button onClick={goToNextWeek} className="wbtn">→</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem' }}>
+          <button onClick={goToPrevWeek} style={{ background: 'transparent', border: '.5px solid rgba(255,255,255,0.15)', borderRadius: 6, color: '#888', padding: '6px 14px', cursor: 'pointer', fontSize: 15 }}>←</button>
+          <span style={{ fontSize: 18, fontWeight: 500, minWidth: 200, textAlign: 'center' }}>{weekLabel}</span>
+          <button onClick={goToNextWeek} style={{ background: 'transparent', border: '.5px solid rgba(255,255,255,0.15)', borderRadius: 6, color: '#888', padding: '6px 14px', cursor: 'pointer', fontSize: 15 }}>→</button>
         </div>
 
-        {/* filters */}
-        <div className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+        {/* filter tabs */}
+        <div style={{ display: 'flex', gap: 4, overflowX: 'auto', scrollbarWidth: 'none' }}>
           {filters.map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-3.5 py-1.5 rounded-t-lg text-xs border-b-0 cursor-pointer whitespace-nowrap transition-colors
-                ${filter === f
-                  ? 'bg-[var(--bg)] text-[var(--pink-200)] font-medium border border-[var(--border2)] mb-[-1px]'
-                  : 'bg-transparent text-[var(--muted)] border border-transparent hover:text-[var(--text)]'
-                }`}
+              style={{
+                padding: '8px 18px',
+                borderRadius: '8px 8px 0 0',
+                fontSize: 17,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                background: filter === f ? '#1a1a1a' : 'transparent',
+                color: filter === f ? '#ED93B1' : '#888',
+                fontWeight: filter === f ? 500 : 400,
+                border: filter === f ? '.5px solid rgba(255,255,255,0.15)' : '.5px solid transparent',
+                borderBottom: filter === f ? '1px solid #1a1a1a' : 'none',
+                marginBottom: filter === f ? -1 : 0,
+              }}
             >
               {f}
             </button>
@@ -123,33 +143,31 @@ export function TasksPage() {
       </div>
 
       {/* body */}
-      <div className="px-7 py-6 flex-1">
+      <div style={{ padding: '1.5rem 1.75rem', flex: 1 }}>
         {activeTask && (
-            <FocusTimerCard
-              task={activeTask}
-              onClose={async () => {
-              setActiveTask(null)
-              await loadWeek(weekOffset)
-            }}
-            />
-          )}
+          <FocusTimerCard
+            task={activeTask}
+            onClose={async () => { setActiveTask(null); await loadWeek(weekOffset) }}
+          />
+        )}
+
         {filtered.length === 0 ? (
-          <div className="text-center py-16 text-[var(--muted)] text-sm">
+          <div style={{ textAlign: 'center', padding: '4rem 1rem', color: '#888', fontSize: 20 }}>
             nenhuma tarefa nesta semana
           </div>
         ) : (
-          <table className="w-full border-collapse">
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                <th className="w-9"></th>
-                <th className="text-left text-xs text-[var(--muted)] font-medium px-2.5 py-1.5 border-b border-[var(--border)] uppercase tracking-wider">tarefa</th>
-                <th className="text-left text-xs text-[var(--muted)] font-medium px-2.5 py-1.5 border-b border-[var(--border)] uppercase tracking-wider cursor-pointer w-20" onClick={() => handleSort('priority')}>prior.{sortArrow('priority')}</th>
-                <th className="text-left text-xs text-[var(--muted)] font-medium px-2.5 py-1.5 border-b border-[var(--border)] uppercase tracking-wider w-32">categoria</th>
-                <th className="text-left text-xs text-[var(--muted)] font-medium px-2.5 py-1.5 border-b border-[var(--border)] uppercase tracking-wider w-14">criação</th>
-                <th className="text-left text-xs text-[var(--muted)] font-medium px-2.5 py-1.5 border-b border-[var(--border)] uppercase tracking-wider cursor-pointer w-24" onClick={() => handleSort('due')}>vencimento{sortArrow('due')}</th>
-                <th className="text-left text-xs text-[var(--muted)] font-medium px-2.5 py-1.5 border-b border-[var(--border)] uppercase tracking-wider cursor-pointer w-16" onClick={() => handleSort('est')}>estimado{sortArrow('est')}</th>
-                <th className="text-left text-xs text-[var(--muted)] font-medium px-2.5 py-1.5 border-b border-[var(--border)] uppercase tracking-wider cursor-pointer w-14" onClick={() => handleSort('spent')}>gasto{sortArrow('spent')}</th>
-                <th className="w-10"></th>
+                <th style={{ ...thStyle, width: 44 }}></th>
+                <th style={thStyle}>tarefa</th>
+                <th style={{ ...thStyle, cursor: 'pointer', width: 100 }} onClick={() => handleSort('priority')}>prior.{sortArrow('priority')}</th>
+                <th style={{ ...thStyle, width: 160 }}>categoria</th>
+                <th style={{ ...thStyle, width: 70 }}>criação</th>
+                <th style={{ ...thStyle, cursor: 'pointer', width: 120 }} onClick={() => handleSort('due')}>vencimento{sortArrow('due')}</th>
+                <th style={{ ...thStyle, cursor: 'pointer', width: 90 }} onClick={() => handleSort('est')}>estimado{sortArrow('est')}</th>
+                <th style={{ ...thStyle, cursor: 'pointer', width: 80 }} onClick={() => handleSort('spent')}>gasto{sortArrow('spent')}</th>
+                <th style={{ ...thStyle, width: 44 }}></th>
               </tr>
             </thead>
             <tbody>
@@ -158,58 +176,56 @@ export function TasksPage() {
                 return (
                   <tr
                     key={task.id}
-                    className={`border-b border-[var(--border)] hover:bg-[var(--bg2)] transition-colors ${carried ? 'opacity-70' : ''}`}
+                    style={{ opacity: carried ? 0.72 : 1 }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#222'}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
                   >
-                    <td className="px-2.5 py-2.5 text-center">
-                        {task.status !== 'concluída' && task.status !== 'arquivada' && !activeTask ? (
-                          <button
-                            onClick={() => setActiveTask(task)}
-                            className="w-7 h-7 rounded-full border border-[var(--border)] bg-transparent text-[var(--muted)] hover:bg-[var(--pink-900)] hover:text-[var(--pink-400)] hover:border-[var(--pink-800)] flex items-center justify-center cursor-pointer text-xs"
-                          >
-                            ▶
-                          </button>
-                        ) : task.status === 'concluída' ? (
-                          <span className="text-[var(--green)] text-sm">✓</span>
-                        ) : null}
-                      </td>
-                    <td className="px-2.5 py-2.5">
+                    <td style={{ ...tdStyle, textAlign: 'center', width: 44 }}>
+                      {task.status !== 'concluída' && task.status !== 'arquivada' && !activeTask ? (
+                        <button
+                          onClick={() => setActiveTask(task)}
+                          style={{ width: 30, height: 30, borderRadius: '50%', border: '.5px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#888', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}
+                          onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = '#4B1528'; el.style.color = '#D4537E'; el.style.borderColor = '#72243E' }}
+                          onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.color = '#888'; el.style.borderColor = 'rgba(255,255,255,0.08)' }}
+                        >▶</button>
+                      ) : task.status === 'concluída' ? (
+                        <span style={{ color: '#5DCAA5', fontSize: 18 }}>✓</span>
+                      ) : null}
+                    </td>
+                    <td style={tdStyle}>
                       <button
-                        className="font-medium text-sm text-left text-[var(--text)] hover:text-[var(--pink-200)] bg-transparent border-none cursor-pointer p-0 w-full"
                         onClick={() => setEditingTask(task)}
+                        style={{ fontWeight: 500, fontSize: 18, color: '#f0f0f0', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#ED93B1'}
+                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#f0f0f0'}
                       >
                         {task.name}
                       </button>
                       {carried && (
-                        <span className="text-[10px] bg-[var(--bg4)] text-[var(--muted)] px-1.5 py-0.5 rounded ml-1.5">
-                          arrastada
-                        </span>
+                        <span style={{ fontSize: 15, background: '#333', color: '#888', padding: '2px 7px', borderRadius: 6, marginLeft: 8 }}>arrastada</span>
                       )}
                     </td>
-                    <td className="px-2.5 py-2.5">
+                    <td style={tdStyle}>
                       <Badge label={task.priority.toString()} variant="priority" value={task.priority.toString() as any} />
                     </td>
-                    <td className="px-2.5 py-2.5">
+                    <td style={tdStyle}>
                       <Badge label={task.category} variant="category" value={task.category as any} />
                     </td>
-                    <td className="px-2.5 py-2.5 text-xs text-[var(--muted)]">
-                      {formatShortDate(task.createdAt)}
-                    </td>
-                    <td className={`px-2.5 py-2.5 text-sm ${task.isOverdue ? 'text-[var(--red)]' : 'text-[var(--muted)]'}`}>
-                      {formatShortDate(task.dueDate)}
-                    </td>
-                    <td className="px-2.5 py-2.5 text-sm text-[var(--muted)]">
-                      {formatMinutes(task.estimatedMinutes)}
-                    </td>
-                    <td className="px-2.5 py-2.5 text-xs text-[var(--green)]">
+                    <td style={{ ...tdStyle, fontSize: 17, color: '#888' }}>{formatShortDate(task.createdAt)}</td>
+                    <td style={{ ...tdStyle, color: task.isOverdue ? '#E24B4A' : '#888' }}>{formatShortDate(task.dueDate)}</td>
+                    <td style={{ ...tdStyle, color: '#888' }}>{formatMinutes(task.estimatedMinutes)}</td>
+                    <td style={{ ...tdStyle, fontSize: 17, color: '#5DCAA5' }}>
                       {task.totalSpentSeconds > 0 ? formatMinutes(task.totalSpentSeconds / 60) : '—'}
                     </td>
-                    <td className="px-2.5 py-2.5">
+                    <td style={{ ...tdStyle, width: 44 }}>
                       <button
-                        onClick={() => handleArchive(task.id)}
-                        className="w-7 h-7 rounded-md border border-[var(--border)] bg-transparent text-[var(--muted)] hover:bg-[var(--red-bg)] hover:text-[#F09595] flex items-center justify-center cursor-pointer text-xs"
+                        onClick={() => setConfirmId(task.id)}
+                        style={{ width: 30, height: 30, borderRadius: 6, border: '.5px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#888', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                        onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = '#2e1010'; el.style.color = '#F09595' }}
+                        onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.color = '#888' }}
                         title="arquivar"
                       >
-                        🗃
+                        <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><polyline points="21,8 21,21 3,21 3,8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
                       </button>
                     </td>
                   </tr>
@@ -220,40 +236,29 @@ export function TasksPage() {
         )}
       </div>
 
-  <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="nova tarefa">
-    <TaskForm
-      onSubmit={async (data) => {
-        await createTask(data as any)
-        setShowForm(false)
-        showToast('tarefa criada!')
-      }}
-      onCancel={() => setShowForm(false)}
-    />
-  </Modal>
+      <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="nova tarefa">
+        <TaskForm
+          onSubmit={async (data) => { await createTask(data as any); setShowForm(false); showToast('tarefa criada!') }}
+          onCancel={() => setShowForm(false)}
+        />
+      </Modal>
 
-  <Modal isOpen={editingTask !== null} onClose={() => setEditingTask(null)} title="editar tarefa">
-    {editingTask && (
-      <TaskForm
-        initialData={{
-          name: editingTask.name,
-          category: editingTask.category,
-          priority: editingTask.priority.toString(),
-          estimatedMinutes: editingTask.estimatedMinutes,
-          dueDate: editingTask.dueDate,
-          notes: editingTask.notes,
-          recurrent: editingTask.recurrent,
-          recurDays: editingTask.recurDays,
-          createdAt: editingTask.createdAt,
-        }}
-        onSubmit={async (data) => {
-          await updateTask({ id: editingTask.id, ...data as any })
-          setEditingTask(null)
-          showToast('tarefa atualizada!')
-        }}
-        onCancel={() => setEditingTask(null)}
-      />
-    )}
-  </Modal>
+      <Modal isOpen={editingTask !== null} onClose={() => setEditingTask(null)} title="editar tarefa">
+        {editingTask && (
+          <TaskForm
+            initialData={{
+              name: editingTask.name, category: editingTask.category,
+              priority: editingTask.priority.toString(),
+              estimatedMinutes: editingTask.estimatedMinutes,
+              dueDate: editingTask.dueDate, notes: editingTask.notes,
+              recurrent: editingTask.recurrent, recurDays: editingTask.recurDays,
+              createdAt: editingTask.createdAt,
+            }}
+            onSubmit={async (data) => { await updateTask({ id: editingTask.id, ...data as any }); setEditingTask(null); showToast('tarefa atualizada!') }}
+            onCancel={() => setEditingTask(null)}
+          />
+        )}
+      </Modal>
 
       <ConfirmDialog
         isOpen={confirmId !== null}

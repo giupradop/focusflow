@@ -2,16 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { useLeisureStore } from '../store/useLeisureStore'
 import { useAppStore } from '../store/useAppStore'
 import { Modal } from '../components/ui/Modal'
-import { Button } from '../components/ui/Button'
 import { formatLeisureBalance } from '../../utils/leisureCalc'
 import { formatSeconds, formatMinutes } from '../../utils/formatTime'
 
 export function LazerPage() {
-  const {
-    bank, activities, activeSession,
-    loadBank, loadActivities, createActivity,
-    deleteActivity, startSession, completeSession, tickSession
-  } = useLeisureStore()
+  const { bank, activities, activeSession, loadBank, loadActivities, createActivity, deleteActivity, startSession, completeSession, tickSession } = useLeisureStore()
   const { showToast } = useAppStore()
 
   const [showForm, setShowForm] = useState(false)
@@ -19,30 +14,20 @@ export function LazerPage() {
   const [newCost, setNewCost] = useState(30)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  useEffect(() => {
-    loadBank()
-    loadActivities()
-  }, [])
+  useEffect(() => { loadBank(); loadActivities() }, [])
 
   useEffect(() => {
     if (activeSession) {
-      intervalRef.current = setInterval(() => {
-        tickSession()
-      }, 1000)
+      intervalRef.current = setInterval(() => { tickSession() }, 1000)
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
   }, [activeSession?.id])
 
   async function handleStart(activityId: number) {
-    try {
-      await startSession(activityId)
-    } catch (e: any) {
-      showToast(e.message)
-    }
+    try { await startSession(activityId) }
+    catch (e: any) { showToast(e.message) }
   }
 
   async function handleComplete() {
@@ -54,9 +39,7 @@ export function LazerPage() {
   async function handleCreateActivity() {
     if (!newName.trim()) return
     await createActivity(newName.trim(), newCost)
-    setNewName('')
-    setNewCost(30)
-    setShowForm(false)
+    setNewName(''); setNewCost(30); setShowForm(false)
     showToast('atividade criada!')
   }
 
@@ -64,56 +47,70 @@ export function LazerPage() {
   const remaining = activeSession ? activeSession.remainingSeconds : 0
   const pct = activeSession ? Math.round((1 - activeSession.remainingSeconds / (activeSession.activityCostMinutes * 60)) * 100) : 0
 
-  const inputCls = 'w-full bg-[var(--bg4)] border border-[var(--border2)] rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--pink-500)]'
-  const labelCls = 'text-[11px] text-[var(--muted)] uppercase tracking-wider mb-1 block'
+  const inputStyle: React.CSSProperties = { width: '100%', background: '#333', border: '.5px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '10px 12px', fontSize: 15, color: '#f0f0f0', outline: 'none', fontFamily: 'inherit' }
+  const labelStyle: React.CSSProperties = { fontSize: 12, color: '#888', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6, display: 'block' }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="px-7 pt-6 pb-4 border-b border-[var(--border)] bg-[var(--bg)] sticky top-0 z-10">
-        <div className="flex items-start justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+
+      {/* header */}
+      <div style={{ padding: '1.5rem 1.75rem 1rem', borderBottom: '.5px solid rgba(255,255,255,0.08)', background: '#1a1a1a', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
-            <h1 className="text-2xl font-medium">lazer</h1>
-            <p className="text-sm text-[var(--muted)] mt-1">gaste seu tempo conquistado</p>
+            <h1 style={{ fontSize: 28, fontWeight: 500 }}>lazer</h1>
+            <p style={{ fontSize: 15, color: '#888', marginTop: 4 }}>gaste seu tempo conquistado</p>
           </div>
-          <Button label="+ nova atividade" onClick={() => setShowForm(true)} />
+          <button
+            onClick={() => setShowForm(true)}
+            style={{ padding: '10px 20px', background: '#D4537E', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 500, cursor: 'pointer' }}
+          >
+            + nova atividade
+          </button>
         </div>
       </div>
 
-      <div className="px-7 py-6 flex-1 flex flex-col gap-5">
+      <div style={{ padding: '1.5rem 1.75rem', flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {/* saldo */}
-        <div className="bg-[var(--pink-900)] border border-[var(--pink-800)] rounded-2xl p-6 flex items-center justify-between">
+        <div style={{ background: '#4B1528', border: '.5px solid #72243E', borderRadius: 16, padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <div className="text-xs text-[var(--pink-200)] mb-1">saldo disponível</div>
-            <div className="text-5xl font-medium text-[var(--pink-400)]">{balanceText}</div>
-            <div className="text-xs text-[var(--pink-500)] mt-1.5">acumulado · nunca expira</div>
+            <div style={{ fontSize: 13, color: '#ED93B1', marginBottom: 4 }}>saldo disponível</div>
+            <div style={{ fontSize: 52, fontWeight: 500, color: '#D4537E', lineHeight: 1 }}>{balanceText}</div>
+            <div style={{ fontSize: 13, color: '#993556', marginTop: 6 }}>acumulado · nunca expira</div>
           </div>
-          <div className="text-right text-sm">
-            <div className="text-[var(--pink-200)]">banco de lazer</div>
-            <div className="text-xs text-[var(--muted)] mt-1">use com sabedoria 🌸</div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 15, color: '#ED93B1' }}>banco de lazer</div>
+            <div style={{ fontSize: 13, color: '#888', marginTop: 4 }}>use com sabedoria 🌸</div>
           </div>
         </div>
 
         {/* timer ativo */}
         {activeSession && (
-          <div className="bg-[var(--green-bg)] border border-[#0F6E56] rounded-xl p-5">
-            <div className="flex items-start justify-between mb-3">
+          <div style={{ background: '#0a2820', border: '.5px solid #0F6E56', borderRadius: 12, padding: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
               <div>
-                <div className="text-base font-medium text-[#9FE1CB]">lazer em andamento</div>
-                <div className="text-xs text-[var(--green)] mt-1">{formatMinutes(activeSession.activityCostMinutes)} reservados</div>
+                <div style={{ fontSize: 17, fontWeight: 500, color: '#9FE1CB' }}>lazer em andamento</div>
+                <div style={{ fontSize: 13, color: '#5DCAA5', marginTop: 4 }}>{formatMinutes(activeSession.activityCostMinutes)} reservados</div>
               </div>
-              <span className="text-xs bg-[var(--green-bg)] text-[var(--green)] border border-[#0F6E56] px-2 py-1 rounded-full">usando</span>
+              <span style={{ fontSize: 13, background: '#0a2820', color: '#5DCAA5', border: '.5px solid #0F6E56', padding: '3px 10px', borderRadius: 20 }}>usando</span>
             </div>
-            <div className="flex items-center gap-4 my-3">
-              <div className="text-[40px] font-medium font-mono text-[var(--green)]">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '12px 0' }}>
+              <div style={{ fontSize: 44, fontWeight: 500, fontVariantNumeric: 'tabular-nums', color: '#5DCAA5' }}>
                 {formatSeconds(remaining)}
+              </div>
+              <button
+                onClick={handleComplete}
+                style={{ padding: '8px 18px', background: '#1D9E75', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 500, cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#0F6E56'}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = '#1D9E75'}
+              >
+                encerrar
+              </button>
             </div>
-              <Button label="encerrar" onClick={handleComplete} />
+            <div style={{ height: 4, background: '#0a3028', borderRadius: 2 }}>
+              <div style={{ height: 4, background: '#5DCAA5', borderRadius: 2, width: `${pct}%`, transition: 'width .5s' }} />
             </div>
-            <div className="h-1 bg-[#0a3028] rounded-full">
-              <div className="h-1 bg-[var(--green)] rounded-full transition-all" style={{ width: `${pct}%` }} />
-            </div>
-            <div className="flex justify-between text-xs text-[#5DCAA5] mt-1.5">
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#5DCAA5', marginTop: 6 }}>
               <span>{pct}% aproveitado</span>
               <span>restam {formatSeconds(remaining)}</span>
             </div>
@@ -122,54 +119,52 @@ export function LazerPage() {
 
         {/* atividades */}
         <div>
-          <div className="text-xs text-[var(--muted)] uppercase tracking-wider mb-3">atividades cadastradas</div>
+          <div style={{ fontSize: 12, color: '#888', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 12 }}>atividades cadastradas</div>
           {activities.length === 0 ? (
-            <div className="text-sm text-[var(--muted)] py-4">nenhuma atividade cadastrada</div>
+            <div style={{ fontSize: 15, color: '#888', padding: '1rem 0' }}>nenhuma atividade cadastrada</div>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {activities.map(a => (
-                <div key={a.id} className="flex items-center gap-3 px-4 py-3 bg-[var(--bg2)] border border-[var(--border)] rounded-xl">
-                  <div className="flex-1">
-                    <div className="text-sm font-medium">{a.name}</div>
-                    <div className="text-xs text-[var(--muted)] mt-0.5">custo: {formatMinutes(a.costMinutes)}</div>
+                <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: '#222', border: '.5px solid rgba(255,255,255,0.08)', borderRadius: 12 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 16, fontWeight: 500 }}>{a.name}</div>
+                    <div style={{ fontSize: 14, color: '#888', marginTop: 2 }}>custo: {formatMinutes(a.costMinutes)}</div>
                   </div>
                   <button
                     onClick={() => handleStart(a.id)}
                     disabled={!!activeSession || !bank || bank.balance.minutes < a.costMinutes}
-                    className="px-4 py-1.5 bg-[var(--pink-400)] text-white text-xs font-medium rounded-lg border-none cursor-pointer hover:bg-[var(--pink-500)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    style={{ padding: '8px 18px', background: '#D4537E', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 500, cursor: 'pointer', opacity: (!!activeSession || !bank || bank.balance.minutes < a.costMinutes) ? 0.4 : 1 }}
+                    onMouseEnter={e => { if (!(!!activeSession || !bank || bank.balance.minutes < a.costMinutes)) (e.currentTarget as HTMLElement).style.background = '#993556' }}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = '#D4537E'}
                   >
                     usar
                   </button>
                   <button
-                    onClick={async () => {
-                      await deleteActivity(a.id)
-                      showToast('atividade removida')
-                    }}
-                    className="w-7 h-7 rounded-md border border-[var(--border)] bg-transparent text-[var(--muted)] hover:bg-[var(--red-bg)] hover:text-[#F09595] flex items-center justify-center cursor-pointer text-xs"
-                  >
-                    ✕
-                  </button>
+                    onClick={async () => { await deleteActivity(a.id); showToast('atividade removida') }}
+                    style={{ width: 32, height: 32, borderRadius: 6, border: '.5px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#888', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}
+                    onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = '#2e1010'; el.style.color = '#F09595' }}
+                    onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.color = '#888' }}
+                  >✕</button>
                 </div>
               ))}
             </div>
           )}
         </div>
-
       </div>
 
       <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="nova atividade de lazer">
-        <div className="flex flex-col gap-3">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label className={labelCls}>nome</label>
-            <input className={inputCls} value={newName} onChange={e => setNewName(e.target.value)} placeholder="ex: jogar zelda" />
+            <label style={labelStyle}>nome</label>
+            <input style={inputStyle} value={newName} onChange={e => setNewName(e.target.value)} placeholder="ex: jogar zelda" />
           </div>
           <div>
-            <label className={labelCls}>custo (minutos do banco)</label>
-            <input className={inputCls} type="number" min={5} step={5} value={newCost} onChange={e => setNewCost(+e.target.value)} />
+            <label style={labelStyle}>custo (minutos do banco)</label>
+            <input style={inputStyle} type="number" min={5} step={5} value={newCost} onChange={e => setNewCost(+e.target.value)} />
           </div>
-          <div className="flex gap-2 mt-2">
-            <Button label="criar" onClick={handleCreateActivity} />
-            <Button label="cancelar" onClick={() => setShowForm(false)} variant="secondary" />
+          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+            <button onClick={handleCreateActivity} style={{ padding: '10px 20px', background: '#D4537E', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 500, cursor: 'pointer' }}>criar</button>
+            <button onClick={() => setShowForm(false)} style={{ padding: '10px 16px', background: '#333', color: '#888', border: 'none', borderRadius: 8, fontSize: 15, cursor: 'pointer' }}>cancelar</button>
           </div>
         </div>
       </Modal>
