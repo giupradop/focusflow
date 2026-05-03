@@ -1,6 +1,7 @@
 export const TaskStatus = {
   PENDING: 'pendente',
   IN_PROGRESS: 'em andamento',
+  PAUSED: 'pausada',
   DONE: 'concluída',
   OVERDUE: 'atrasada',
   ARCHIVED: 'arquivada',

@@ -99,7 +99,7 @@ export class Task extends Entity<number> {
   saveSession(session: Session): void {
     session.complete()
     this.props.sessions.push(session)
-    this.props.status = TaskStatus.IN_PROGRESS
+    this.props.status = TaskStatus.PAUSED
   }
 
   archive(): void {
@@ -113,6 +113,26 @@ export class Task extends Entity<number> {
   restore(): void {
     this.props.archived = false
     this.props.status = TaskStatus.PENDING
+  }
+
+  update(props: {
+  name: string
+  category: Category
+  priority: Priority
+  estimatedMinutes: number
+  dueDate: Date
+  notes: string
+  recurrent: boolean
+  recurDays: number[]
+  }): void {
+  this.props.name = props.name
+  this.props.category = props.category
+  this.props.priority = props.priority
+  this.props.estimatedMinutes = props.estimatedMinutes
+  this.props.dueDate = props.dueDate
+  this.props.notes = props.notes
+  this.props.recurrent = props.recurrent
+  this.props.recurDays = props.recurDays
   }
 
   updateNotes(notes: string): void {
