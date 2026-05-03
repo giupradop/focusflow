@@ -14,6 +14,8 @@ import { Session } from '../../domain/task/Session'
 import { CompleteSessionUseCase } from '../../application/task/CompleteSessionUseCase'
 import { PauseSessionUseCase } from '../../application/task/PauseSessionUseCase'
 import { LocalStorageLeisureRepository } from '../../infrastructure/repositories/LocalStorageLeisureRepository'
+import { useLeisureStore } from './useLeisureStore'
+import { recordFocusDay } from '../../utils/streak'
 
 const repository = new LocalStorageTaskRepository()
 
@@ -140,8 +142,11 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   },
 
   completeSession: async (input) => {
-  await completeSessionUseCase.execute(input)
-},
+    await completeSessionUseCase.execute(input)
+    recordFocusDay()
+    const { loadBank } = useLeisureStore.getState()
+    await loadBank()
+  },
 
 pauseSession: async (input) => {
   await pauseSessionUseCase.execute(input)

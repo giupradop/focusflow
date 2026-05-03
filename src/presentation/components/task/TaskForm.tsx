@@ -15,22 +15,33 @@ type TaskFormProps = {
     createdAt: Date
   }) => void
   onCancel: () => void
+  initialData?: {
+    name: string
+    category: string
+    priority: string
+    estimatedMinutes: number
+    dueDate: Date
+    notes: string
+    recurrent: boolean
+    recurDays: number[]
+    createdAt: Date
+  }
 }
 
 const DAYS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb']
 const CATEGORIES = Object.values(Category)
 const PRIORITIES = ['alta', 'média', 'baixa']
 
-export function TaskForm({ onSubmit, onCancel }: TaskFormProps) {
-  const [name, setName] = useState('')
-  const [category, setCategory] = useState<string>(CATEGORIES[0])
-  const [priority, setPriority] = useState('média')
-  const [estimatedMinutes, setEstimatedMinutes] = useState(60)
-  const [dueDate, setDueDate] = useState('')
-  const [notes, setNotes] = useState('')
-  const [recurrent, setRecurrent] = useState(false)
-  const [recurDays, setRecurDays] = useState<number[]>([])
-  const [createdAt, setCreatedAt] = useState(new Date().toISOString().slice(0, 10))
+export function TaskForm({ onSubmit, onCancel, initialData }: TaskFormProps) {
+    const [name, setName] = useState(initialData?.name ?? '')
+    const [category, setCategory] = useState<string>(initialData?.category ?? CATEGORIES[0])
+    const [priority, setPriority] = useState(initialData?.priority ?? 'média')
+    const [estimatedMinutes, setEstimatedMinutes] = useState(initialData?.estimatedMinutes ?? 60)
+    const [dueDate, setDueDate] = useState(initialData?.dueDate ? initialData.dueDate.toISOString().slice(0, 10) : '')
+    const [notes, setNotes] = useState(initialData?.notes ?? '')
+    const [recurrent, setRecurrent] = useState(initialData?.recurrent ?? false)
+    const [recurDays, setRecurDays] = useState<number[]>(initialData?.recurDays ?? [])
+    const [createdAt, setCreatedAt] = useState(initialData?.createdAt ? initialData.createdAt.toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10))
 
   function toggleDay(i: number) {
     setRecurDays(prev =>
@@ -127,7 +138,7 @@ export function TaskForm({ onSubmit, onCancel }: TaskFormProps) {
       )}
 
       <div className="flex gap-2 mt-2">
-        <Button label="criar tarefa" onClick={handleSubmit} />
+        <Button label={initialData ? 'salvar' : 'criar tarefa'} onClick={handleSubmit} />
         <Button label="cancelar" onClick={onCancel} variant="secondary" />
       </div>
     </div>

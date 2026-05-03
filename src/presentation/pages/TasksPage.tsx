@@ -16,7 +16,7 @@ type SortCol = 'priority' | 'due' | 'est' | 'spent' | null
 type FilterTab = 'todas' | 'pendente' | 'em andamento' | 'pausada' | 'concluída' | 'atrasada'
 
 export function TasksPage() {
-  const { tasks, carriedTasks, loadWeek, archiveTask, createTask } = useTaskStore()
+  const { tasks, carriedTasks, loadWeek, archiveTask, createTask, updateTask } = useTaskStore()
   const { showToast } = useAppStore()
   const { weekOffset, weekLabel, goToPrevWeek, goToNextWeek } = useWeekNavigation()
 
@@ -27,6 +27,7 @@ export function TasksPage() {
 
   const [showForm, setShowForm] = useState(false)
   const [activeTask, setActiveTask] = useState<Task | null>(null)
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
 
   useEffect(() => {
     loadWeek(weekOffset)
@@ -172,7 +173,10 @@ export function TasksPage() {
                         ) : null}
                       </td>
                     <td className="px-2.5 py-2.5">
-                      <button className="font-medium text-sm text-left text-[var(--text)] hover:text-[var(--pink-200)] bg-transparent border-none cursor-pointer p-0 w-full">
+                      <button
+                        className="font-medium text-sm text-left text-[var(--text)] hover:text-[var(--pink-200)] bg-transparent border-none cursor-pointer p-0 w-full"
+                        onClick={() => setEditingTask(task)}
+                      >
                         {task.name}
                       </button>
                       {carried && (
@@ -225,6 +229,30 @@ export function TasksPage() {
       }}
       onCancel={() => setShowForm(false)}
     />
+  </Modal>
+
+  <Modal isOpen={editingTask !== null} onClose={() => setEditingTask(null)} title="editar tarefa">
+    {editingTask && (
+      <TaskForm
+        initialData={{
+          name: editingTask.name,
+          category: editingTask.category,
+          priority: editingTask.priority.toString(),
+          estimatedMinutes: editingTask.estimatedMinutes,
+          dueDate: editingTask.dueDate,
+          notes: editingTask.notes,
+          recurrent: editingTask.recurrent,
+          recurDays: editingTask.recurDays,
+          createdAt: editingTask.createdAt,
+        }}
+        onSubmit={async (data) => {
+          await updateTask({ id: editingTask.id, ...data as any })
+          setEditingTask(null)
+          showToast('tarefa atualizada!')
+        }}
+        onCancel={() => setEditingTask(null)}
+      />
+    )}
   </Modal>
 
       <ConfirmDialog

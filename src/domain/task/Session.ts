@@ -42,8 +42,4 @@ export class Session extends Entity<number> {
   get pausedSeconds() { return this.props.pausedSeconds }
   get startedAt() { return this.props.startedAt }
   get endedAt() { return this.props.endedAt }
-
-  get earnedLeisureMinutes(): number {
-    return Math.ceil(this.props.durationSeconds / 60 / 5)
-  }
 }

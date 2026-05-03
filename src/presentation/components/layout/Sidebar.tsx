@@ -1,6 +1,8 @@
+import { useEffect } from 'react'
 import { useAppStore } from '../../store/useAppStore'
 import { useLeisureStore } from '../../store/useLeisureStore'
 import { formatLeisureBalance } from '../../../utils/leisureCalc'
+import { getCurrentStreak, getLast7Days } from '../../../utils/streak'
 
 const navItems = [
   { id: 'hoje', label: 'hoje', icon: '🕐' },
@@ -25,6 +27,13 @@ export function Sidebar() {
   const { bank } = useLeisureStore()
 
   const balanceText = bank ? formatLeisureBalance(bank.balance.minutes) : '0m'
+  const streak = getCurrentStreak()
+  const last7 = getLast7Days()
+  
+  useEffect(() => {
+    const { loadBank } = useLeisureStore.getState()
+    loadBank()
+  }, [])
 
   return (
     <aside className="w-[252px] min-h-screen bg-[var(--bg2)] border-r border-[var(--border)] flex flex-col sticky top-0 h-screen overflow-y-auto">
@@ -90,13 +99,17 @@ export function Sidebar() {
           <div className="text-2xl font-medium text-[var(--pink-400)]">{balanceText}</div>
           <div className="text-xs text-[var(--pink-500)] mt-0.5">acumulado · nunca expira</div>
           <div className="flex items-center gap-1 mt-2">
-            {Array.from({ length: 7 }).map((_, i) => (
+            {last7.map((d, i) => (
               <div
                 key={i}
-                className={`w-3.5 h-3.5 rounded-sm ${i < 3 ? 'bg-[var(--pink-400)]' : 'bg-[var(--bg4)]'} ${i === 6 ? 'bg-[var(--pink-200)]' : ''}`}
+                className={`w-3.5 h-3.5 rounded-sm ${
+                  d.isToday && d.hasFocus ? 'bg-[var(--pink-200)]' :
+                  d.hasFocus ? 'bg-[var(--pink-400)]' :
+                  'bg-[var(--bg4)]'
+                }`}
               />
             ))}
-            <span className="text-xs text-[var(--pink-400)] font-medium ml-1">3 dias</span>
+            <span className="text-xs text-[var(--pink-400)] font-medium ml-1">{streak} dias</span>
           </div>
         </div>
         <div className="flex justify-between text-xs py-1">

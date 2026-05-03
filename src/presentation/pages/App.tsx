@@ -7,6 +7,9 @@ import { TasksPage } from './TasksPage'
 import { LazerPage } from './LazerPage'
 import { ArquivoPage } from './ArquivoPage'
 import { ConfiguracoesPage } from './ConfiguracoesPage'
+import { CalendarioPage } from './CalendarioPage'
+import { EstatisticasPage } from './EstatisticasPage'
+import { ResumoPage } from './ResumoPage'
 
 export function App() {
   const { currentPage, toast, hideToast } = useAppStore()
@@ -15,9 +18,9 @@ export function App() {
     hoje: <HojePage />,
     tasks: <TasksPage />,
     lazer: <LazerPage />,
-    calendario: <div className="p-8 text-[var(--muted)]">calendário — em breve</div>,
-    stats: <div className="p-8 text-[var(--muted)]">estatísticas — em breve</div>,
-    resumo: <div className="p-8 text-[var(--muted)]">resumo semanal — em breve</div>,
+    calendario: <CalendarioPage />,
+    stats: <EstatisticasPage />,
+    resumo: <ResumoPage />,
     arquivo: <ArquivoPage />,
     settings: <ConfiguracoesPage />,
   }

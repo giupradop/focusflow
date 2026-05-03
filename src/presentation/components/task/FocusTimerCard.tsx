@@ -5,6 +5,7 @@ import { formatSeconds, formatMinutes } from '../../../utils/formatTime'
 import { Button } from '../ui/Button'
 import type { Task } from '../../../domain/task/Task'
 import { Session } from '../../../domain/task/Session'
+import { useLeisureStore } from '../../store/useLeisureStore'
 
 type FocusTimerCardProps = {
   task: Task
@@ -55,7 +56,8 @@ export function FocusTimerCard({ task, onClose }: FocusTimerCardProps) {
   async function handleComplete() {
     stopTimer()
     if (!sessionRef.current) return
-    await completeSession({ taskId: task.id, session: sessionRef.current, ratio: 5 })
+    const { ratio } = useLeisureStore.getState()
+    await completeSession({ taskId: task.id, session: sessionRef.current, ratio })
     showToast('sessão concluída! 🎉')
     onClose()
   }
