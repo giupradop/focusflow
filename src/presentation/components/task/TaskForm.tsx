@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button } from '../ui/Button'
 import { Category } from '../../../domain/task/Category'
+import { useSlideAnimation } from '../../hooks/useSlideAnimation'
 
 type TaskFormProps = {
   onSubmit: (data: {
@@ -42,6 +43,7 @@ export function TaskForm({ onSubmit, onCancel, initialData }: TaskFormProps) {
     const [recurrent, setRecurrent] = useState(initialData?.recurrent ?? false)
     const [recurDays, setRecurDays] = useState<number[]>(initialData?.recurDays ?? [])
     const [createdAt, setCreatedAt] = useState(initialData?.createdAt ? initialData.createdAt.toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10))
+    const recurRef = useSlideAnimation(recurrent)
 
   function toggleDay(i: number) {
     setRecurDays(prev =>
@@ -112,30 +114,28 @@ export function TaskForm({ onSubmit, onCancel, initialData }: TaskFormProps) {
       </div>
 
       <div className="flex items-center gap-2">
-        <input type="checkbox" id="recurrent" checked={recurrent} onChange={e => setRecurrent(e.target.checked)} className="w-4 h-4 accent-[var(--pink-400)]" />
-        <label htmlFor="recurrent" className="text-sm text-[var(--muted)] cursor-pointer">tarefa recorrente</label>
-      </div>
+    <input type="checkbox" id="recurrent" checked={recurrent} onChange={e => setRecurrent(e.target.checked)} className="w-4 h-4 accent-[var(--pink-400)]" />
+    <label htmlFor="recurrent" className="text-sm text-[var(--muted)] cursor-pointer">tarefa recorrente</label>
+  </div>
 
-      {recurrent && (
-        <div>
-          <label className={labelCls}>repetir nos dias</label>
-          <div className="flex gap-2 flex-wrap">
-            {DAYS.map((d, i) => (
-              <button
-                key={i}
-                onClick={() => toggleDay(i)}
-                className={`px-3 py-1 rounded-md text-xs border cursor-pointer transition-colors
-                  ${recurDays.includes(i)
-                    ? 'bg-[var(--pink-900)] text-[var(--pink-200)] border-[var(--pink-800)]'
-                    : 'bg-transparent text-[var(--muted)] border-[var(--border2)]'
-                  }`}
-              >
-                {d}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+  <div ref={recurRef} style={{ display: 'none' }}>
+    <label className={labelCls}>repetir nos dias</label>
+    <div className="flex gap-2 flex-wrap">
+      {DAYS.map((d, i) => (
+        <button
+          key={i}
+          onClick={() => toggleDay(i)}
+          className={`px-3 py-1 rounded-md text-xs border cursor-pointer transition-colors
+            ${recurDays.includes(i)
+              ? 'bg-[var(--pink-900)] text-[var(--pink-200)] border-[var(--pink-800)]'
+              : 'bg-transparent text-[var(--muted)] border-[var(--border2)]'
+            }`}
+        >
+          {d}
+        </button>
+      ))}
+    </div>
+  </div>
 
       <div className="flex gap-2 mt-2">
         <Button label={initialData ? 'salvar' : 'criar tarefa'} onClick={handleSubmit} />

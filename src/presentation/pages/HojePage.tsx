@@ -11,13 +11,15 @@ import { formatMinutes } from '../../utils/formatTime'
 import { formatShortDate } from '../../utils/formatDate'
 import type { Task } from '../../domain/task/Task'
 
+
 export function HojePage() {
-  const { todayTasks, overdueTasks, loadToday, archiveTask, createTask } = useTaskStore()
+  const { todayTasks, overdueTasks, loadToday, archiveTask, createTask, updateTask } = useTaskStore()
   const { showToast } = useAppStore()
 
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [confirmId, setConfirmId] = useState<number | null>(null)
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
 
   useEffect(() => {
     loadToday()
@@ -62,7 +64,12 @@ export function HojePage() {
                 ) : null}
               </td>
               <td className="px-2.5 py-2.5">
-                <span className="font-medium text-sm">{task.name}</span>
+                <button
+                  className="font-medium text-sm text-left text-[var(--text)] hover:text-[var(--pink-200)] bg-transparent border-none cursor-pointer p-0"
+                  onClick={() => setEditingTask(task)}
+                >
+                  {task.name}
+                </button>
               </td>
               <td className="px-2.5 py-2.5">
                 <Badge label={task.priority.toString()} variant="priority" value={task.priority.toString() as any} />
@@ -149,6 +156,31 @@ export function HojePage() {
           }}
           onCancel={() => setShowForm(false)}
         />
+      </Modal>
+
+      <Modal isOpen={editingTask !== null} onClose={() => setEditingTask(null)} title="editar tarefa">
+        {editingTask && (
+          <TaskForm
+            initialData={{
+              name: editingTask.name,
+              category: editingTask.category,
+              priority: editingTask.priority.toString(),
+              estimatedMinutes: editingTask.estimatedMinutes,
+              dueDate: editingTask.dueDate,
+              notes: editingTask.notes,
+              recurrent: editingTask.recurrent,
+              recurDays: editingTask.recurDays,
+              createdAt: editingTask.createdAt,
+            }}
+            onSubmit={async (data) => {
+              await updateTask({ id: editingTask.id, ...data as any })
+              setEditingTask(null)
+              showToast('tarefa atualizada!')
+              loadToday()
+            }}
+            onCancel={() => setEditingTask(null)}
+          />
+        )}
       </Modal>
 
       <ConfirmDialog
