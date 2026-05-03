@@ -10,6 +10,10 @@ import { GetTodayTasksUseCase } from '../../application/task/GetTodayTasksUseCas
 import { PauseRecurrenceUseCase } from '../../application/task/PauseRecurrenceUseCase'
 import { ResumeRecurrenceUseCase } from '../../application/task/ResumeRecurrenceUseCase'
 import type { Category } from '../../domain/task/Category'
+import { Session } from '../../domain/task/Session'
+import { CompleteSessionUseCase } from '../../application/task/CompleteSessionUseCase'
+import { PauseSessionUseCase } from '../../application/task/PauseSessionUseCase'
+import { LocalStorageLeisureRepository } from '../../infrastructure/repositories/LocalStorageLeisureRepository'
 
 const repository = new LocalStorageTaskRepository()
 
@@ -21,6 +25,9 @@ const getTasksByWeekUseCase = new GetTasksByWeekUseCase(repository)
 const getTodayTasksUseCase = new GetTodayTasksUseCase(repository)
 const pauseRecurrenceUseCase = new PauseRecurrenceUseCase(repository)
 const resumeRecurrenceUseCase = new ResumeRecurrenceUseCase(repository)
+const leisureRepository = new LocalStorageLeisureRepository()
+const completeSessionUseCase = new CompleteSessionUseCase(repository, leisureRepository)
+const pauseSessionUseCase = new PauseSessionUseCase(repository)
 
 type TaskStore = {
   tasks: Task[]
@@ -31,6 +38,8 @@ type TaskStore = {
   isLoading: boolean
   weekOffset: number
   curCategory: Category | null
+  completeSession: (input: { taskId: number; session: Session; ratio: number }) => Promise<void>
+  pauseSession: (input: { taskId: number; session: Session }) => Promise<void>
 
   loadWeek: (offset: number, category?: Category) => Promise<void>
   loadToday: () => Promise<void>
@@ -129,6 +138,16 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     await resumeRecurrenceUseCase.execute({ taskId: id })
     await get().loadArchived()
   },
+
+  completeSession: async (input) => {
+  await completeSessionUseCase.execute(input)
+},
+
+pauseSession: async (input) => {
+  await pauseSessionUseCase.execute(input)
+  const { weekOffset, curCategory } = get()
+  await get().loadWeek(weekOffset, curCategory ?? undefined)
+},
 
   setWeekOffset: (offset) => set({ weekOffset: offset }),
   setCurCategory: (category) => set({ curCategory: category }),

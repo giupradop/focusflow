@@ -14,33 +14,38 @@ type CompleteSessionOutput = {
 }
 
 export class CompleteSessionUseCase {
-  private taskRepository: ITaskRepository
-  private leisureRepository: ILeisureRepository
+  private taskRepo: ITaskRepository
+  private leisureRepo: ILeisureRepository
   private leisureService: LeisureDomainService
 
   constructor(
     taskRepository: ITaskRepository,
     leisureRepository: ILeisureRepository,
   ) {
-    this.taskRepository = taskRepository
-    this.leisureRepository = leisureRepository
+    this.taskRepo = taskRepository
+    this.leisureRepo = leisureRepository
     this.leisureService = new LeisureDomainService()
   }
 
   async execute(input: CompleteSessionInput): Promise<CompleteSessionOutput> {
-    const task = await this.taskRepository.findById(input.taskId)
+    console.log('CompleteSessionUseCase executando...', input.taskId)
+
+    const task = await this.taskRepo.findById(input.taskId)
+    console.log('task encontrada:', task?.name, 'status:', task?.status)
 
     if (!task) {
       throw new Error(`Task ${input.taskId} não encontrada`)
     }
 
     task.completeSession(input.session)
+    console.log('após completeSession, status:', task.status)
 
-    const bank = await this.leisureRepository.findBank()
+    const bank = await this.leisureRepo.findBank()
     this.leisureService.depositEarned(input.session, bank, input.ratio)
 
-    await this.taskRepository.save(task)
-    await this.leisureRepository.saveBank(bank)
+    await this.taskRepo.save(task)
+    console.log('task salva!')
+    await this.leisureRepo.saveBank(bank)
 
     return { earnedMinutes: this.leisureService.calculateEarned(input.session, input.ratio) }
   }
