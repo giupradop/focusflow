@@ -33,7 +33,7 @@ taskRoutes.get('/week', async (req, res) => {
   }
 })
 
-taskRoutes.get('/today', async (req, res) => {
+taskRoutes.get('/today', async (_req, res) => {
   try {
     const useCase = new GetTodayTasksUseCase(repo())
     const result = await useCase.execute()
@@ -46,7 +46,7 @@ taskRoutes.get('/today', async (req, res) => {
   }
 })
 
-taskRoutes.get('/archived', async (req, res) => {
+taskRoutes.get('/archived', async (_req, res) => {
   try {
     const tasks = await repo().findArchived()
     res.json(tasks.map(t => serialize(t)))
