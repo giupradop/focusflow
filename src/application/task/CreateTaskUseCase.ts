@@ -29,7 +29,7 @@ export class CreateTaskUseCase {
   async execute(input: CreateTaskInput): Promise<CreateTaskOutput> {
     const priority = Priority.create(input.priorityLevel)
 
-    const id = Date.now()
+    const id = 0
 
     const task = Task.create(id, {
       name: input.name,

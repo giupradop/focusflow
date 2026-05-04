@@ -6,8 +6,11 @@ import { LocalStorageLeisureRepository } from '../../infrastructure/repositories
 import { CreateLeisureActivityUseCase } from '../../application/leisure/CreateLeisureActivityUseCase'
 import { StartLeisureSessionUseCase } from '../../application/leisure/StartLeisureSessionUseCase'
 import { CompleteLeisureSessionUseCase } from '../../application/leisure/CompleteLeisureSessionUseCase'
+import { ApiLeisureRepository } from '../../infrastructure/repositories/ApiLeisureRepository'
+import type { LeisureHistory } from '../../domain/leisure/ILeisureRepository'
 
-const repository = new LocalStorageLeisureRepository()
+const repository = new ApiLeisureRepository()
+//const repository = new LocalStorageLeisureRepository()
 const createActivityUseCase = new CreateLeisureActivityUseCase(repository)
 const startSessionUseCase = new StartLeisureSessionUseCase(repository)
 const completeSessionUseCase = new CompleteLeisureSessionUseCase(repository)
@@ -16,14 +19,17 @@ type LeisureStore = {
   bank: LeisureBank | null
   activities: LeisureActivity[]
   activeSession: LeisureSession | null
+  sessionTick: number
+  history: LeisureHistory
   isLoading: boolean
   ratio: number
 
   loadBank: () => Promise<void>
   loadActivities: () => Promise<void>
+  loadHistory: () => Promise<void>
   createActivity: (name: string, costMinutes: number) => Promise<void>
   deleteActivity: (id: number) => Promise<void>
-  startSession: (activityId: number) => Promise<void>
+  startSession: (activityId: number, requestedMinutes?: number) => Promise<void>
   completeSession: () => Promise<void>
   tickSession: () => void
   setRatio: (ratio: number) => void
@@ -33,6 +39,8 @@ export const useLeisureStore = create<LeisureStore>((set, get) => ({
   bank: null,
   activities: [],
   activeSession: null,
+  sessionTick: 0,
+  history: { weeklyHistory: [], perActivity: [] },
   isLoading: false,
   ratio: 5,
 
@@ -46,6 +54,11 @@ export const useLeisureStore = create<LeisureStore>((set, get) => ({
     set({ activities })
   },
 
+  loadHistory: async () => {
+    const history = await repository.findHistory()
+    set({ history })
+  },
+
   createActivity: async (name, costMinutes) => {
     await createActivityUseCase.execute({ name, costMinutes })
     await get().loadActivities()
@@ -56,8 +69,8 @@ export const useLeisureStore = create<LeisureStore>((set, get) => ({
     await get().loadActivities()
   },
 
-  startSession: async (activityId) => {
-    const { session } = await startSessionUseCase.execute({ activityId })
+  startSession: async (activityId, requestedMinutes) => {
+    const { session } = await startSessionUseCase.execute({ activityId, requestedMinutes })
     set({ activeSession: session })
   },
 
@@ -67,6 +80,7 @@ export const useLeisureStore = create<LeisureStore>((set, get) => ({
     await completeSessionUseCase.execute({ session: activeSession })
     set({ activeSession: null })
     await get().loadBank()
+    await get().loadHistory()
   },
 
   tickSession: () => {
@@ -77,7 +91,7 @@ export const useLeisureStore = create<LeisureStore>((set, get) => ({
       get().completeSession()
       return
     }
-    set({ activeSession: { ...activeSession } as LeisureSession })
+    set(state => ({ sessionTick: state.sessionTick + 1 }))
   },
 
   setRatio: (ratio) => set({ ratio }),

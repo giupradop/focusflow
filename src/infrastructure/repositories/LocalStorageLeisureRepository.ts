@@ -1,7 +1,7 @@
 import { LeisureActivity } from '../../domain/leisure/LeisureActivity'
 import { LeisureBank } from '../../domain/leisure/LeisureBank'
 import { LeisureSession } from '../../domain/leisure/LeisureSession'
-import type { ILeisureRepository } from '../../domain/leisure/ILeisureRepository'
+import type { ILeisureRepository, LeisureHistory } from '../../domain/leisure/ILeisureRepository'
 
 export class LocalStorageLeisureRepository implements ILeisureRepository {
   private readonly BANK_KEY = 'focusflow:leisureBank'
@@ -95,6 +95,10 @@ export class LocalStorageLeisureRepository implements ILeisureRepository {
   async findSessionById(id: number): Promise<LeisureSession | null> {
     const sessions = await this.loadSessions()
     return sessions.find(s => s.id === id) ?? null
+  }
+
+  async findHistory(): Promise<LeisureHistory> {
+    return { weeklyHistory: [], perActivity: [] }
   }
 
   private async loadSessions(): Promise<LeisureSession[]> {

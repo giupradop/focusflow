@@ -25,6 +25,10 @@ export class LeisureSession extends Entity<number> {
     })
   }
 
+  static restore(id: number, activityId: number, activityCostMinutes: number, usedSeconds: number, startedAt: Date, endedAt?: Date): LeisureSession {
+    return new LeisureSession(id, { activityId, activityCostMinutes, startedAt, endedAt, usedSeconds })
+  }
+
   tick(): void {
     const maxSeconds = this.props.activityCostMinutes * 60
     if (this.props.usedSeconds < maxSeconds) {

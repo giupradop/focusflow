@@ -24,5 +24,6 @@ export class CompleteLeisureSessionUseCase {
     bank.withdraw(session)
 
     await this.leisureRepository.saveBank(bank)
+    await this.leisureRepository.saveSession(session)
   }
 }

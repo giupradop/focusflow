@@ -8,7 +8,7 @@ import { getCurrentStreak, getLast7Days } from '../../../utils/streak'
 export function Sidebar() {
   const { currentPage, setCurrentPage, setCurCategory } = useAppStore()
   const { bank, activities } = useLeisureStore()
-  const { tasks } = useTaskStore()
+  const { allWeekTasks } = useTaskStore()
 
   const balanceText = bank ? formatLeisureBalance(bank.balance.minutes) : '0m'
   const streak = getCurrentStreak()
@@ -17,24 +17,28 @@ export function Sidebar() {
   useEffect(() => {
     useLeisureStore.getState().loadBank()
     useLeisureStore.getState().loadActivities()
+    useTaskStore.getState().loadWeek(0)
   }, [])
 
-  const totalTasks = tasks.filter(t => !t.archived).length
+  const pending = (t: { archived: boolean; status: string }) =>
+    !t.archived && t.status !== 'concluída' && t.status !== 'arquivada'
+
+  const totalTasks = allWeekTasks.filter(pending).length
   const lazerCount = activities.length
 
   const catCounts: Record<string, number> = {
-    'trabalho': tasks.filter(t => t.category === 'trabalho' && !t.archived).length,
-    'faculdade': tasks.filter(t => t.category === 'faculdade' && !t.archived).length,
-    'saúde e bem estar': tasks.filter(t => t.category === 'saúde e bem estar' && !t.archived).length,
-    'formação pessoal': tasks.filter(t => t.category === 'formação pessoal' && !t.archived).length,
-    'projetos pessoais': tasks.filter(t => t.category === 'projetos pessoais' && !t.archived).length,
+    'trabalho': allWeekTasks.filter(t => t.category === 'trabalho' && pending(t)).length,
+    'faculdade': allWeekTasks.filter(t => t.category === 'faculdade' && pending(t)).length,
+    'saúde e bem estar': allWeekTasks.filter(t => t.category === 'saúde e bem estar' && pending(t)).length,
+    'formação pessoal': allWeekTasks.filter(t => t.category === 'formação pessoal' && pending(t)).length,
+    'projetos pessoais': allWeekTasks.filter(t => t.category === 'projetos pessoais' && pending(t)).length,
   }
 
-  function NavBtn({ id, label, badge, children }: { id: string, label: string, badge?: number, children: React.ReactNode }) {
+  function NavBtn({ id, label, badge, onClick: extraClick, children }: { id: string, label: string, badge?: number, onClick?: () => void, children: React.ReactNode }) {
     const active = currentPage === id
     return (
       <button
-        onClick={() => setCurrentPage(id as any)}
+        onClick={() => { setCurrentPage(id as any); extraClick?.() }}
         style={{
           display: 'flex', alignItems: 'center', gap: 10,
           padding: '5px 10px', borderRadius: 8, fontSize: 16,
@@ -82,7 +86,7 @@ export function Sidebar() {
         <NavBtn id="hoje" label="hoje">
           <Icon><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></Icon>
         </NavBtn>
-        <NavBtn id="tasks" label="todas as tasks" badge={totalTasks}>
+        <NavBtn id="tasks" label="todas as tasks" badge={totalTasks} onClick={() => setCurCategory(null)}>
           <Icon><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></Icon>
         </NavBtn>
         <NavBtn id="lazer" label="lazer" badge={lazerCount}>

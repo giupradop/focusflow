@@ -1,5 +1,3 @@
-import { Button } from './Button'
-
 type ConfirmDialogProps = {
   isOpen: boolean
   title: string
@@ -11,14 +9,30 @@ type ConfirmDialogProps = {
 export function ConfirmDialog({ isOpen, title, message, onConfirm, onCancel }: ConfirmDialogProps) {
   if (!isOpen) return null
 
+  const border = '.5px solid rgba(255,255,255,0.08)'
+
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center">
-      <div className="bg-[var(--bg2)] border border-[var(--border2)] rounded-2xl p-6 w-[340px] text-center">
-        <div className="text-base font-medium mb-2">{title}</div>
-        <div className="text-sm text-[var(--muted)] mb-5">{message}</div>
-        <div className="flex gap-2 justify-center">
-          <Button label="cancelar" onClick={onCancel} variant="secondary" />
-          <Button label="confirmar" onClick={onConfirm} variant="danger" />
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#222', border, borderRadius: 16, padding: '2rem', width: 380, textAlign: 'center' }}>
+        <div style={{ fontSize: 20, fontWeight: 500, marginBottom: 8 }}>{title}</div>
+        <div style={{ fontSize: 16, color: '#888', marginBottom: 28, lineHeight: 1.6 }}>{message}</div>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+          <button
+            onClick={onCancel}
+            style={{ padding: '10px 24px', borderRadius: 8, border, background: 'transparent', color: '#888', fontSize: 16, cursor: 'pointer' }}
+            onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = '#2a2a2a'; el.style.color = '#f0f0f0' }}
+            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.color = '#888' }}
+          >
+            cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            style={{ padding: '10px 24px', borderRadius: 8, border: '.5px solid rgba(226,75,74,0.4)', background: 'rgba(226,75,74,0.12)', color: '#E24B4A', fontSize: 16, cursor: 'pointer', fontWeight: 500 }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(226,75,74,0.2)'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'rgba(226,75,74,0.12)'}
+          >
+            confirmar
+          </button>
         </div>
       </div>
     </div>
