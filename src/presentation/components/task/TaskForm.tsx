@@ -36,7 +36,8 @@ export function TaskForm({ onSubmit, onCancel, initialData }: TaskFormProps) {
   const [name, setName] = useState(initialData?.name ?? '')
   const [category, setCategory] = useState<string>(initialData?.category ?? CATEGORIES[0])
   const [priority, setPriority] = useState(initialData?.priority ?? 'média')
-  const [estimatedMinutes, setEstimatedMinutes] = useState(initialData?.estimatedMinutes ?? 60)
+  const [estimatedHours, setEstimatedHours] = useState(Math.floor((initialData?.estimatedMinutes ?? 60) / 60))
+  const [estimatedMins, setEstimatedMins] = useState((initialData?.estimatedMinutes ?? 60) % 60)
   const [dueDate, setDueDate] = useState(initialData?.dueDate ? initialData.dueDate.toISOString().slice(0, 10) : '')
   const [notes, setNotes] = useState(initialData?.notes ?? '')
   const [recurrent, setRecurrent] = useState(initialData?.recurrent ?? false)
@@ -52,7 +53,7 @@ export function TaskForm({ onSubmit, onCancel, initialData }: TaskFormProps) {
     if (!name.trim() || !dueDate) return
     onSubmit({
       name: name.trim(), category, priorityLevel: priority,
-      estimatedMinutes, dueDate: new Date(dueDate + 'T00:00:00'),
+      estimatedMinutes: estimatedHours * 60 + estimatedMins, dueDate: new Date(dueDate + 'T00:00:00'),
       notes, recurrent, recurDays,
       createdAt: new Date(createdAt + 'T00:00:00'),
     })
@@ -107,8 +108,17 @@ export function TaskForm({ onSubmit, onCancel, initialData }: TaskFormProps) {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <div>
-          <label style={lbl}>estimado (min)</label>
-          <input style={inp} type="number" min={5} step={5} value={estimatedMinutes} onChange={e => setEstimatedMinutes(+e.target.value)} />
+          <label style={lbl}>tempo estimado</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+              <input style={{ ...inp, paddingRight: 28 }} type="number" min={0} max={23} value={estimatedHours} onChange={e => setEstimatedHours(+e.target.value)} />
+              <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#888', pointerEvents: 'none' }}>h</span>
+            </div>
+            <div style={{ position: 'relative', flex: 1 }}>
+              <input style={{ ...inp, paddingRight: 28 }} type="number" min={0} max={59} step={5} value={estimatedMins} onChange={e => setEstimatedMins(+e.target.value)} />
+              <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#888', pointerEvents: 'none' }}>min</span>
+            </div>
+          </div>
         </div>
         <div>
           <label style={lbl}>data de criação</label>
