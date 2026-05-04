@@ -18,7 +18,7 @@ export class CreateLeisureActivityUseCase {
   }
 
   async execute(input: CreateLeisureActivityInput): Promise<CreateLeisureActivityOutput> {
-    const id = Date.now()
+    const id = 0
 
     const activity = LeisureActivity.create(id, input.name, input.costMinutes)
 

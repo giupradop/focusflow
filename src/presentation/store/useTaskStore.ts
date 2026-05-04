@@ -17,7 +17,13 @@ import { LocalStorageLeisureRepository } from '../../infrastructure/repositories
 import { useLeisureStore } from './useLeisureStore'
 import { recordFocusDay } from '../../utils/streak'
 
-const repository = new LocalStorageTaskRepository()
+import { ApiTaskRepository } from '../../infrastructure/repositories/ApiTaskRepository'
+import { ApiLeisureRepository } from '../../infrastructure/repositories/ApiLeisureRepository'
+
+const repository = new ApiTaskRepository()
+const leisureRepository = new ApiLeisureRepository()
+
+//const repository = new LocalStorageTaskRepository()
 
 const createTaskUseCase = new CreateTaskUseCase(repository)
 const updateTaskUseCase = new UpdateTaskUseCase(repository)
@@ -27,12 +33,13 @@ const getTasksByWeekUseCase = new GetTasksByWeekUseCase(repository)
 const getTodayTasksUseCase = new GetTodayTasksUseCase(repository)
 const pauseRecurrenceUseCase = new PauseRecurrenceUseCase(repository)
 const resumeRecurrenceUseCase = new ResumeRecurrenceUseCase(repository)
-const leisureRepository = new LocalStorageLeisureRepository()
+//const leisureRepository = new LocalStorageLeisureRepository()
 const completeSessionUseCase = new CompleteSessionUseCase(repository, leisureRepository)
 const pauseSessionUseCase = new PauseSessionUseCase(repository)
 
 type TaskStore = {
   tasks: Task[]
+  allWeekTasks: Task[]
   carriedTasks: Task[]
   todayTasks: Task[]
   overdueTasks: Task[]
@@ -78,6 +85,7 @@ type TaskStore = {
 
 export const useTaskStore = create<TaskStore>((set, get) => ({
   tasks: [],
+  allWeekTasks: [],
   carriedTasks: [],
   todayTasks: [],
   overdueTasks: [],
@@ -88,11 +96,13 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   loadWeek: async (offset, category) => {
     set({ isLoading: true })
-    const { tasks, carriedTasks } = await getTasksByWeekUseCase.execute({
-      weekOffset: offset,
-      category,
-    })
-    set({ tasks, carriedTasks, isLoading: false, weekOffset: offset })
+    const { tasks, carriedTasks } = await getTasksByWeekUseCase.execute({ weekOffset: offset, category })
+    if (category) {
+      const { tasks: allWeekTasks } = await getTasksByWeekUseCase.execute({ weekOffset: offset })
+      set({ tasks, carriedTasks, allWeekTasks, isLoading: false, weekOffset: offset })
+    } else {
+      set({ tasks, carriedTasks, allWeekTasks: tasks, isLoading: false, weekOffset: offset })
+    }
   },
 
   loadToday: async () => {
@@ -111,6 +121,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     await createTaskUseCase.execute(input)
     const { weekOffset, curCategory } = get()
     await get().loadWeek(weekOffset, curCategory ?? undefined)
+    await get().loadToday()
   },
 
   updateTask: async (input) => {

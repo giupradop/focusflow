@@ -23,7 +23,7 @@ export class StartSessionUseCase {
       throw new Error(`Task ${input.taskId} não encontrada`)
     }
 
-    const sessionId = Date.now()
+    const sessionId = 0
     const session = task.startSession(sessionId)
 
     await this.taskRepository.save(task)

@@ -9,16 +9,19 @@ type ToastProps = {
 export function Toast({ message, isVisible, onHide }: ToastProps) {
   useEffect(() => {
     if (!isVisible) return
-    const timer = setTimeout(() => {
-      onHide()
-    }, 3000)
+    const timer = setTimeout(() => onHide(), 3000)
     return () => clearTimeout(timer)
   }, [isVisible, message])
 
   if (!isVisible) return null
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 bg-[var(--pink-900)] text-[var(--pink-100)] border border-[var(--pink-800)] px-5 py-2.5 rounded-xl text-sm">
+    <div style={{
+      position: 'fixed', bottom: 24, right: 24, zIndex: 50,
+      background: '#4B1528', border: '.5px solid #72243E',
+      color: '#F4C2D4', padding: '12px 20px',
+      borderRadius: 12, fontSize: 16,
+    }}>
       {message}
     </div>
   )
