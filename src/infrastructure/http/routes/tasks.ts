@@ -5,7 +5,6 @@ import { SqlTaskRepository } from '../../repositories/SqlTaskRepository'
 import { CreateTaskUseCase } from '../../../application/task/CreateTaskUseCase'
 import { ArchiveTaskUseCase } from '../../../application/task/ArchiveTaskUseCase'
 import { RestoreTaskUseCase } from '../../../application/task/RestoreTaskUseCase'
-import { GetTasksByWeekUseCase } from '../../../application/task/GetTasksByWeekUseCase'
 import { GetTodayTasksUseCase } from '../../../application/task/GetTodayTasksUseCase'
 import { PauseRecurrenceUseCase } from '../../../application/task/PauseRecurrenceUseCase'
 import { ResumeRecurrenceUseCase } from '../../../application/task/ResumeRecurrenceUseCase'
@@ -18,15 +17,16 @@ function repo() {
 
 taskRoutes.get('/week', async (req, res) => {
   try {
-    const { weekOffset, category } = req.query
-    const useCase = new GetTasksByWeekUseCase(repo())
-    const result = await useCase.execute({
-      weekOffset: Number(weekOffset ?? 0),
-      category: category as string | undefined,
-    })
+    const { start, end, category } = req.query
+    if (!start || !end) return res.status(400).json({ error: 'start e end são obrigatórios' })
+    const repository = repo()
+    const [tasks, carriedTasks] = await Promise.all([
+      repository.findByWeek(new Date(start as string), new Date(end as string), category as string | undefined),
+      repository.findCarriedOver(new Date(start as string), category as string | undefined),
+    ])
     res.json({
-      tasks: result.tasks.map(t => serialize(t)),
-      carriedTasks: result.carriedTasks.map(t => serialize(t)),
+      tasks: tasks.map(t => serialize(t)),
+      carriedTasks: carriedTasks.map(t => serialize(t)),
     })
   } catch (err) {
     res.status(500).json({ error: String(err) })
