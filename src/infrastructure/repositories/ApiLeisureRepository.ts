@@ -3,7 +3,7 @@ import { LeisureBank } from '../../domain/leisure/LeisureBank'
 import { LeisureSession } from '../../domain/leisure/LeisureSession'
 import type { ILeisureRepository, LeisureHistory } from '../../domain/leisure/ILeisureRepository'
 
-const BASE = 'http://localhost:3001/api'
+const BASE = `${import.meta.env.VITE_API_URL ?? 'http://localhost:3001'}/api`
 
 export class ApiLeisureRepository implements ILeisureRepository {
 

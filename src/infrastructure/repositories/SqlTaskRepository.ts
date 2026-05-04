@@ -1,4 +1,3 @@
-import sql from 'mssql'
 import { Task } from '../../domain/task/Task'
 import { Priority } from '../../domain/task/Priority'
 import type { ITaskRepository } from '../../domain/task/ITaskRepository'
@@ -12,77 +11,57 @@ export class SqlTaskRepository implements ITaskRepository {
       category: row.category,
       priority: Priority.create(row.priority),
       status: row.status,
-      createdAt: new Date(row.createdAt),
-      dueDate: new Date(row.dueDate),
-      estimatedMinutes: row.estimatedMinutes,
+      createdAt: new Date(row.createdat),
+      dueDate: new Date(row.duedate),
+      estimatedMinutes: row.estimatedminutes,
       notes: row.notes ?? '',
       archived: row.archived,
       recurrent: row.recurrent,
-      recurDays: row.recurDays ? row.recurDays.split(',').filter(Boolean).map(Number) : [],
-      recurPaused: row.recurPaused,
+      recurDays: row.recurdays ? row.recurdays.split(',').filter(Boolean).map(Number) : [],
+      recurPaused: row.recurpaused,
       sessions: [],
-      completedAt: row.completedAt ? new Date(row.completedAt) : undefined,
-      spentSeconds: row.spentSeconds ?? 0,
+      completedAt: row.completedat ? new Date(row.completedat) : undefined,
+      spentSeconds: row.spentseconds ?? 0,
     })
-  }
-
-  private async serialize(task: Task, request: sql.Request): Promise<void> {
-    request
-      .input('name', sql.NVarChar, task.name)
-      .input('category', sql.NVarChar, task.category)
-      .input('priority', sql.NVarChar, task.priority.toString())
-      .input('status', sql.NVarChar, task.status)
-      .input('createdAt', sql.DateTime2, task.createdAt)
-      .input('dueDate', sql.DateTime2, task.dueDate)
-      .input('estimatedMinutes', sql.Int, task.estimatedMinutes)
-      .input('notes', sql.NVarChar, task.notes ?? '')
-      .input('archived', sql.Bit, task.archived)
-      .input('recurrent', sql.Bit, task.recurrent)
-      .input('recurDays', sql.NVarChar, task.recurDays.join(','))
-      .input('recurPaused', sql.Bit, task.recurPaused)
-      .input('completedAt', sql.DateTime2, task.completedAt ?? null)
-      .input('spentSeconds', sql.Int, task.totalSpentSeconds)
   }
 
   async findById(id: number): Promise<Task | null> {
     const pool = await getPool()
-    const result = await pool.request()
-      .input('id', sql.Int, id)
-      .query(`SELECT * FROM Task WHERE id = @id`)
-    if (!result.recordset[0]) return null
-    return this.deserialize(result.recordset[0])
+    const result = await pool.query(`SELECT * FROM task WHERE id = $1`, [id])
+    if (!result.rows[0]) return null
+    return this.deserialize(result.rows[0])
   }
 
   async findByWeek(start: Date, end: Date, category?: string): Promise<Task[]> {
     const pool = await getPool()
-    const req = pool.request()
-      .input('start', sql.DateTime2, start)
-      .input('end', sql.DateTime2, end)
-    const catClause = category ? `AND category = @category` : ''
-    if (category) req.input('category', sql.NVarChar, category)
-    const result = await req.query(`
-      SELECT * FROM Task
-      WHERE archived = 0
-        AND createdAt >= @start AND createdAt <= @end
-        ${catClause}
-    `)
-    return result.recordset.map(r => this.deserialize(r))
+    if (category) {
+      const result = await pool.query(
+        `SELECT * FROM task WHERE archived = false AND createdat >= $1 AND createdat <= $2 AND category = $3`,
+        [start, end, category]
+      )
+      return result.rows.map(r => this.deserialize(r))
+    }
+    const result = await pool.query(
+      `SELECT * FROM task WHERE archived = false AND createdat >= $1 AND createdat <= $2`,
+      [start, end]
+    )
+    return result.rows.map(r => this.deserialize(r))
   }
 
   async findCarriedOver(weekStart: Date, category?: string): Promise<Task[]> {
     const pool = await getPool()
-    const req = pool.request()
-      .input('weekStart', sql.DateTime2, weekStart)
-    const catClause = category ? `AND category = @category` : ''
-    if (category) req.input('category', sql.NVarChar, category)
-    const result = await req.query(`
-      SELECT * FROM Task
-      WHERE archived = 0
-        AND status != 'concluída'
-        AND createdAt < @weekStart
-        ${catClause}
-    `)
-    return result.recordset.map(r => this.deserialize(r))
+    if (category) {
+      const result = await pool.query(
+        `SELECT * FROM task WHERE archived = false AND status != 'concluída' AND createdat < $1 AND category = $2`,
+        [weekStart, category]
+      )
+      return result.rows.map(r => this.deserialize(r))
+    }
+    const result = await pool.query(
+      `SELECT * FROM task WHERE archived = false AND status != 'concluída' AND createdat < $1`,
+      [weekStart]
+    )
+    return result.rows.map(r => this.deserialize(r))
   }
 
   async findToday(): Promise<Task[]> {
@@ -91,42 +70,28 @@ export class SqlTaskRepository implements ITaskRepository {
     today.setHours(0, 0, 0, 0)
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 1)
-    const result = await pool.request()
-      .input('today', sql.DateTime2, today)
-      .input('tomorrow', sql.DateTime2, tomorrow)
-      .query(`
-        SELECT * FROM Task
-        WHERE archived = 0
-          AND status != 'concluída'
-          AND (
-            (createdAt >= @today AND createdAt < @tomorrow)
-            OR (dueDate >= @today AND dueDate < @tomorrow)
-          )
-      `)
-    return result.recordset.map(r => this.deserialize(r))
+    const result = await pool.query(
+      `SELECT * FROM task WHERE archived = false AND status != 'concluída' AND ((createdat >= $1 AND createdat < $2) OR (duedate >= $1 AND duedate < $2))`,
+      [today, tomorrow]
+    )
+    return result.rows.map(r => this.deserialize(r))
   }
 
   async findOverdue(): Promise<Task[]> {
     const pool = await getPool()
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    const result = await pool.request()
-      .input('today', sql.DateTime2, today)
-      .query(`
-        SELECT * FROM Task
-        WHERE archived = 0
-          AND status != 'concluída'
-          AND status != 'arquivada'
-          AND dueDate < @today
-      `)
-    return result.recordset.map(r => this.deserialize(r))
+    const result = await pool.query(
+      `SELECT * FROM task WHERE archived = false AND status != 'concluída' AND status != 'arquivada' AND duedate < $1`,
+      [today]
+    )
+    return result.rows.map(r => this.deserialize(r))
   }
 
   async findArchived(): Promise<Task[]> {
     const pool = await getPool()
-    const result = await pool.request()
-      .query(`SELECT * FROM Task WHERE archived = 1`)
-    return result.recordset.map(r => this.deserialize(r))
+    const result = await pool.query(`SELECT * FROM task WHERE archived = true`)
+    return result.rows.map(r => this.deserialize(r))
   }
 
   async save(task: Task): Promise<void> {
@@ -134,35 +99,39 @@ export class SqlTaskRepository implements ITaskRepository {
     const existing = await this.findById(task.id)
 
     if (existing) {
-      const req = pool.request().input('id', sql.Int, task.id)
-      await this.serialize(task, req)
-      await req.query(`
-        UPDATE Task SET
-          name = @name, category = @category, priority = @priority,
-          status = @status, dueDate = @dueDate, estimatedMinutes = @estimatedMinutes,
-          notes = @notes, archived = @archived, recurrent = @recurrent,
-          recurDays = @recurDays, recurPaused = @recurPaused,
-          completedAt = @completedAt, spentSeconds = @spentSeconds
-        WHERE id = @id
-      `)
+      await pool.query(
+        `UPDATE task SET
+          name = $1, category = $2, priority = $3, status = $4,
+          duedate = $5, estimatedminutes = $6, notes = $7, archived = $8,
+          recurrent = $9, recurdays = $10, recurpaused = $11,
+          completedat = $12, spentseconds = $13
+        WHERE id = $14`,
+        [
+          task.name, task.category, task.priority.toString(), task.status,
+          task.dueDate, task.estimatedMinutes, task.notes ?? '', task.archived,
+          task.recurrent, task.recurDays.join(','), task.recurPaused,
+          task.completedAt ?? null, task.totalSpentSeconds, task.id,
+        ]
+      )
     } else {
-      const req = pool.request().input('id', sql.Int, task.id)
-      await this.serialize(task, req)
-      await req.query(`
-        INSERT INTO Task (name, category, priority, status, createdAt, dueDate,
-            estimatedMinutes, notes, archived, recurrent, recurDays, recurPaused,
-            completedAt, spentSeconds)
-        VALUES (@name, @category, @priority, @status, @createdAt, @dueDate,
-            @estimatedMinutes, @notes, @archived, @recurrent, @recurDays, @recurPaused,
-            @completedAt, @spentSeconds)
-        `)
+      await pool.query(
+        `INSERT INTO task
+          (name, category, priority, status, createdat, duedate, estimatedminutes,
+           notes, archived, recurrent, recurdays, recurpaused, completedat, spentseconds)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+        [
+          task.name, task.category, task.priority.toString(), task.status,
+          task.createdAt, task.dueDate, task.estimatedMinutes,
+          task.notes ?? '', task.archived, task.recurrent,
+          task.recurDays.join(','), task.recurPaused,
+          task.completedAt ?? null, task.totalSpentSeconds,
+        ]
+      )
     }
   }
 
   async delete(id: number): Promise<void> {
     const pool = await getPool()
-    await pool.request()
-      .input('id', sql.Int, id)
-      .query(`DELETE FROM Task WHERE id = @id`)
+    await pool.query(`DELETE FROM task WHERE id = $1`, [id])
   }
 }

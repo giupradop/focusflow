@@ -1,15 +1,13 @@
 import { Router } from 'express'
 import { getPool } from '../database'
-import sql from 'mssql'
 
 export const configRoutes = Router()
 
-configRoutes.get('/', async (req, res) => {
+configRoutes.get('/', async (_req, res) => {
   try {
     const pool = await getPool()
-    const result = await pool.request()
-      .query(`SELECT ratio FROM Config WHERE id = 1`)
-    res.json({ ratio: result.recordset[0].ratio })
+    const result = await pool.query(`SELECT ratio FROM config WHERE id = 1`)
+    res.json({ ratio: result.rows[0].ratio })
   } catch (err) {
     res.status(500).json({ error: String(err) })
   }
@@ -19,9 +17,7 @@ configRoutes.put('/', async (req, res) => {
   try {
     const { ratio } = req.body
     const pool = await getPool()
-    await pool.request()
-      .input('ratio', sql.Int, ratio)
-      .query(`UPDATE Config SET ratio = @ratio WHERE id = 1`)
+    await pool.query(`UPDATE config SET ratio = $1 WHERE id = 1`, [ratio])
     res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ error: String(err) })

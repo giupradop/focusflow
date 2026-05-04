@@ -3,7 +3,7 @@ import { Priority } from '../../domain/task/Priority'
 import type { ITaskRepository } from '../../domain/task/ITaskRepository'
 import { getWeekRange } from '../../utils/weekHelpers'
 
-const BASE = 'http://localhost:3001/api'
+const BASE = `${import.meta.env.VITE_API_URL ?? 'http://localhost:3001'}/api`
 
 function deserialize(data: any): Task {
   return Task.restore(data.id, {
