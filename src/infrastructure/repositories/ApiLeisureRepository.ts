@@ -4,11 +4,12 @@ import { LeisureSession } from '../../domain/leisure/LeisureSession'
 import type { ILeisureRepository, LeisureHistory } from '../../domain/leisure/ILeisureRepository'
 
 const BASE = `${import.meta.env.VITE_API_URL ?? 'http://localhost:3001'}/api`
+const HEADERS = { 'Content-Type': 'application/json', 'x-api-key': import.meta.env.VITE_API_KEY ?? '' }
 
 export class ApiLeisureRepository implements ILeisureRepository {
 
   async findBank(): Promise<LeisureBank> {
-    const res = await fetch(`${BASE}/leisure/bank`)
+    const res = await fetch(`${BASE}/leisure/bank`, { headers: HEADERS })
     const data = await res.json()
     const bank = LeisureBank.create(1)
     if (data.balanceMinutes > 0) bank.deposit(data.balanceMinutes)
@@ -17,20 +18,19 @@ export class ApiLeisureRepository implements ILeisureRepository {
 
   async saveBank(bank: LeisureBank): Promise<void> {
     await fetch(`${BASE}/leisure/bank`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'PUT', headers: HEADERS,
       body: JSON.stringify({ balanceMinutes: bank.balance.minutes }),
     })
   }
 
   async findActivities(): Promise<LeisureActivity[]> {
-    const res = await fetch(`${BASE}/leisure/activities`)
+    const res = await fetch(`${BASE}/leisure/activities`, { headers: HEADERS })
     const data = await res.json()
     return data.map((a: any) => LeisureActivity.create(a.id, a.name, a.costMinutes))
   }
 
   async findActivityById(id: number): Promise<LeisureActivity | null> {
-    const res = await fetch(`${BASE}/leisure/activities/${id}`)
+    const res = await fetch(`${BASE}/leisure/activities/${id}`, { headers: HEADERS })
     if (!res.ok) return null
     const a = await res.json()
     return LeisureActivity.create(a.id, a.name, a.costMinutes)
@@ -38,20 +38,18 @@ export class ApiLeisureRepository implements ILeisureRepository {
 
   async saveActivity(activity: LeisureActivity): Promise<void> {
     await fetch(`${BASE}/leisure/activities`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: HEADERS,
       body: JSON.stringify({ id: activity.id, name: activity.name, costMinutes: activity.costMinutes }),
     })
   }
 
   async deleteActivity(id: number): Promise<void> {
-    await fetch(`${BASE}/leisure/activities/${id}`, { method: 'DELETE' })
+    await fetch(`${BASE}/leisure/activities/${id}`, { method: 'DELETE', headers: HEADERS })
   }
 
   async saveSession(session: LeisureSession): Promise<void> {
     await fetch(`${BASE}/leisure/sessions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: HEADERS,
       body: JSON.stringify({
         activityId: session.activityId,
         activityCostMinutes: session.activityCostMinutes,
@@ -63,14 +61,14 @@ export class ApiLeisureRepository implements ILeisureRepository {
   }
 
   async findSessionById(id: number): Promise<LeisureSession | null> {
-    const res = await fetch(`${BASE}/leisure/sessions/${id}`)
+    const res = await fetch(`${BASE}/leisure/sessions/${id}`, { headers: HEADERS })
     if (!res.ok) return null
     const s = await res.json()
     return LeisureSession.create(s.id, s.activityId, s.activityCostMinutes)
   }
 
   async findHistory(): Promise<LeisureHistory> {
-    const res = await fetch(`${BASE}/leisure/history`)
+    const res = await fetch(`${BASE}/leisure/history`, { headers: HEADERS })
     return res.json()
   }
 }

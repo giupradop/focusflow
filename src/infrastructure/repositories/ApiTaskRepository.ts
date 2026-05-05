@@ -3,6 +3,7 @@ import { Priority } from '../../domain/task/Priority'
 import type { ITaskRepository } from '../../domain/task/ITaskRepository'
 
 const BASE = `${import.meta.env.VITE_API_URL ?? 'http://localhost:3001'}/api`
+const HEADERS = { 'Content-Type': 'application/json', 'x-api-key': import.meta.env.VITE_API_KEY ?? '' }
 
 function deserialize(data: any): Task {
   return Task.restore(data.id, {
@@ -27,18 +28,15 @@ function deserialize(data: any): Task {
 export class ApiTaskRepository implements ITaskRepository {
 
   async findById(id: number): Promise<Task | null> {
-    const res = await fetch(`${BASE}/tasks/${id}`)
+    const res = await fetch(`${BASE}/tasks/${id}`, { headers: HEADERS })
     if (!res.ok) return null
     return deserialize(await res.json())
   }
 
   async findByWeek(start: Date, end: Date, category?: string): Promise<Task[]> {
-    const params = new URLSearchParams({
-      start: start.toISOString(),
-      end: end.toISOString(),
-    })
+    const params = new URLSearchParams({ start: start.toISOString(), end: end.toISOString() })
     if (category) params.set('category', category)
-    const res = await fetch(`${BASE}/tasks/week?${params}`)
+    const res = await fetch(`${BASE}/tasks/week?${params}`, { headers: HEADERS })
     const data = await res.json()
     return data.tasks.map(deserialize)
   }
@@ -46,71 +44,58 @@ export class ApiTaskRepository implements ITaskRepository {
   async findCarriedOver(weekStart: Date, category?: string): Promise<Task[]> {
     const params = new URLSearchParams({ start: weekStart.toISOString(), end: weekStart.toISOString() })
     if (category) params.set('category', category)
-    const res = await fetch(`${BASE}/tasks/week?${params}`)
+    const res = await fetch(`${BASE}/tasks/week?${params}`, { headers: HEADERS })
     const data = await res.json()
     return data.carriedTasks.map(deserialize)
   }
 
   async findToday(): Promise<Task[]> {
-    const res = await fetch(`${BASE}/tasks/today`)
+    const res = await fetch(`${BASE}/tasks/today`, { headers: HEADERS })
     const data = await res.json()
     return data.todayTasks.map(deserialize)
   }
 
   async findOverdue(): Promise<Task[]> {
-    const res = await fetch(`${BASE}/tasks/today`)
+    const res = await fetch(`${BASE}/tasks/today`, { headers: HEADERS })
     const data = await res.json()
     return data.overdueTasks.map(deserialize)
   }
 
   async findArchived(): Promise<Task[]> {
-    const res = await fetch(`${BASE}/tasks/archived`)
+    const res = await fetch(`${BASE}/tasks/archived`, { headers: HEADERS })
     const data = await res.json()
     return data.map(deserialize)
   }
 
   async save(task: Task): Promise<void> {
     const body = {
-        name: task.name,
-        category: task.category,
-        priority: task.priority.toString(),
-        status: task.status,
-        createdAt: task.createdAt.toISOString(),
-        dueDate: task.dueDate.toISOString(),
-        estimatedMinutes: task.estimatedMinutes,
-        notes: task.notes,
-        archived: task.archived,
-        recurrent: task.recurrent,
-        recurDays: task.recurDays,
-        recurPaused: task.recurPaused,
-        completedAt: task.completedAt?.toISOString() ?? null,
-        spentSeconds: task.totalSpentSeconds,
+      name: task.name,
+      category: task.category,
+      priority: task.priority.toString(),
+      status: task.status,
+      createdAt: task.createdAt.toISOString(),
+      dueDate: task.dueDate.toISOString(),
+      estimatedMinutes: task.estimatedMinutes,
+      notes: task.notes,
+      archived: task.archived,
+      recurrent: task.recurrent,
+      recurDays: task.recurDays,
+      recurPaused: task.recurPaused,
+      completedAt: task.completedAt?.toISOString() ?? null,
+      spentSeconds: task.totalSpentSeconds,
     }
 
-    // tenta buscar pelo id — se o id for muito grande (Date.now), não vai existir no banco
     let existing = null
-    try {
-        existing = await this.findById(task.id)
-    } catch {
-        existing = null
-    }
+    try { existing = await this.findById(task.id) } catch { existing = null }
 
     if (existing) {
-        await fetch(`${BASE}/tasks/${task.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-        })
+      await fetch(`${BASE}/tasks/${task.id}`, { method: 'PUT', headers: HEADERS, body: JSON.stringify(body) })
     } else {
-        await fetch(`${BASE}/tasks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-        })
+      await fetch(`${BASE}/tasks`, { method: 'POST', headers: HEADERS, body: JSON.stringify(body) })
     }
-    }
+  }
 
   async delete(id: number): Promise<void> {
-    await fetch(`${BASE}/tasks/${id}`, { method: 'DELETE' })
+    await fetch(`${BASE}/tasks/${id}`, { method: 'DELETE', headers: HEADERS })
   }
 }

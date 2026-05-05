@@ -12,6 +12,14 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+app.use((req, res, next) => {
+  const key = req.headers['x-api-key']
+  if (!key || key !== process.env.API_KEY) {
+    return res.status(401).json({ error: 'não autorizado' })
+  }
+  next()
+})
+
 app.use('/api/tasks', taskRoutes)
 app.use('/api/leisure', leisureRoutes)
 app.use('/api/config', configRoutes)
