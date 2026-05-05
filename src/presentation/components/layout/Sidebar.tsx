@@ -17,6 +17,7 @@ export function Sidebar() {
   useEffect(() => {
     useLeisureStore.getState().loadBank()
     useLeisureStore.getState().loadActivities()
+    useLeisureStore.getState().loadRatio()
     useTaskStore.getState().loadWeek(0)
   }, [])
 

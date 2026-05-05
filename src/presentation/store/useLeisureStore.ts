@@ -9,10 +9,12 @@ import { ApiLeisureRepository } from '../../infrastructure/repositories/ApiLeisu
 import type { LeisureHistory } from '../../domain/leisure/ILeisureRepository'
 
 const repository = new ApiLeisureRepository()
-//const repository = new LocalStorageLeisureRepository()
 const createActivityUseCase = new CreateLeisureActivityUseCase(repository)
 const startSessionUseCase = new StartLeisureSessionUseCase(repository)
 const completeSessionUseCase = new CompleteLeisureSessionUseCase(repository)
+
+const CONFIG_BASE = `${import.meta.env.VITE_API_URL ?? 'http://localhost:3001'}/api/config`
+const HEADERS = { 'Content-Type': 'application/json', 'x-api-key': import.meta.env.VITE_API_KEY ?? '' }
 
 type LeisureStore = {
   bank: LeisureBank | null
@@ -26,12 +28,13 @@ type LeisureStore = {
   loadBank: () => Promise<void>
   loadActivities: () => Promise<void>
   loadHistory: () => Promise<void>
+  loadRatio: () => Promise<void>
   createActivity: (name: string, costMinutes: number) => Promise<void>
   deleteActivity: (id: number) => Promise<void>
   startSession: (activityId: number, requestedMinutes?: number) => Promise<void>
   completeSession: () => Promise<void>
   tickSession: () => void
-  setRatio: (ratio: number) => void
+  setRatio: (ratio: number) => Promise<void>
 }
 
 export const useLeisureStore = create<LeisureStore>((set, get) => ({
@@ -93,5 +96,14 @@ export const useLeisureStore = create<LeisureStore>((set, get) => ({
     set(state => ({ sessionTick: state.sessionTick + 1 }))
   },
 
-  setRatio: (ratio) => set({ ratio }),
+  loadRatio: async () => {
+    const res = await fetch(CONFIG_BASE, { headers: HEADERS })
+    const data = await res.json()
+    set({ ratio: data.ratio ?? 5 })
+  },
+
+  setRatio: async (ratio) => {
+    set({ ratio })
+    await fetch(CONFIG_BASE, { method: 'PUT', headers: HEADERS, body: JSON.stringify({ ratio }) })
+  },
 }))
