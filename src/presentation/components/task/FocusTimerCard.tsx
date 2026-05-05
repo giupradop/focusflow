@@ -54,17 +54,21 @@ export function FocusTimerCard({ task, onClose }: FocusTimerCardProps) {
 
   async function handleComplete() {
     stopTimer()
-    if (!sessionRef.current) return
+    const session = sessionRef.current
+    if (!session) return
+    sessionRef.current = null
     const { ratio } = useLeisureStore.getState()
-    await completeSession({ taskId: task.id, session: sessionRef.current, ratio })
+    await completeSession({ taskId: task.id, session, ratio })
     showToast('sessão concluída! 🎉')
     onClose()
   }
 
   async function handleLater() {
     stopTimer()
-    if (!sessionRef.current) return
-    await pauseSession({ taskId: task.id, session: sessionRef.current })
+    const session = sessionRef.current
+    if (!session) return
+    sessionRef.current = null
+    await pauseSession({ taskId: task.id, session })
     showToast('tempo parcial salvo — continue quando quiser')
     onClose()
   }
