@@ -40,6 +40,11 @@ export class LeisureSession extends Entity<number> {
     }
   }
 
+  setUsedSeconds(seconds: number): void {
+    const maxSeconds = this.props.activityCostMinutes * 60
+    this.props.usedSeconds = Math.min(seconds, maxSeconds)
+  }
+
   complete(): void {
     if (!this.props.endedAt) {
       this.props.endedAt = new Date()

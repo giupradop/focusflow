@@ -29,6 +29,10 @@ export class Session extends Entity<number> {
     this.props.durationSeconds++
   }
 
+  setDuration(seconds: number): void {
+    this.props.durationSeconds = seconds
+  }
+
   pause(): void {
     this.props.pausedSeconds++
   }

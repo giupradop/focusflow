@@ -16,47 +16,68 @@ export function FocusTimerCard({ task, onClose }: FocusTimerCardProps) {
   const { showToast } = useAppStore()
   const sessionRef = useRef<Session | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const [seconds, setSeconds] = useState(task.remainingSeconds)
+
+  // Wall-clock timing — immune to browser tab throttling
+  const startTimeRef = useRef<number>(0)       // Date.now() when last resumed
+  const accumulatedRef = useRef<number>(0)     // seconds counted before last resume
+  const isRunningRef = useRef<boolean>(false)
+
+  // Pause duration tracking (display only)
+  const pauseStartRef = useRef<number>(0)
+  const accumulatedPauseRef = useRef<number>(0)
+
+  const [, forceUpdate] = useState(0)
   const [isRunning, setIsRunning] = useState(false)
-  const [pausedSeconds, setPausedSeconds] = useState(0)
+
+  function getElapsed(): number {
+    if (isRunningRef.current) {
+      return accumulatedRef.current + Math.floor((Date.now() - startTimeRef.current) / 1000)
+    }
+    return accumulatedRef.current
+  }
+
+  function getPausedElapsed(): number {
+    if (!isRunningRef.current && pauseStartRef.current > 0) {
+      return accumulatedPauseRef.current + Math.floor((Date.now() - pauseStartRef.current) / 1000)
+    }
+    return accumulatedPauseRef.current
+  }
 
   useEffect(() => {
     const sessionId = Date.now()
     sessionRef.current = Session.create(sessionId, task.id)
-    startTimer()
-    return () => stopTimer()
-  }, [])
 
-  function startTimer() {
+    startTimeRef.current = Date.now()
+    isRunningRef.current = true
     setIsRunning(true)
-    intervalRef.current = setInterval(() => {
-      setSeconds(prev => prev - 1)
-      sessionRef.current?.tick()
-    }, 1000)
-  }
 
-  function stopTimer() {
-    if (intervalRef.current) clearInterval(intervalRef.current)
-    setIsRunning(false)
-  }
+    // Interval only drives re-renders; actual elapsed time comes from Date.now()
+    intervalRef.current = setInterval(() => forceUpdate(n => n + 1), 1000)
+
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+  }, [])
 
   function handlePause() {
     if (isRunning) {
-      stopTimer()
-      intervalRef.current = setInterval(() => {
-        setPausedSeconds(prev => prev + 1)
-      }, 1000)
+      accumulatedRef.current = getElapsed()
+      isRunningRef.current = false
+      setIsRunning(false)
+      pauseStartRef.current = Date.now()
     } else {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-      startTimer()
+      accumulatedPauseRef.current = getPausedElapsed()
+      pauseStartRef.current = 0
+      startTimeRef.current = Date.now()
+      isRunningRef.current = true
+      setIsRunning(true)
     }
   }
 
   async function handleComplete() {
-    stopTimer()
+    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null }
     const session = sessionRef.current
     if (!session) return
     sessionRef.current = null
+    session.setDuration(getElapsed())
     const { ratio } = useLeisureStore.getState()
     await completeSession({ taskId: task.id, session, ratio })
     showToast('sessão concluída! 🎉')
@@ -64,14 +85,19 @@ export function FocusTimerCard({ task, onClose }: FocusTimerCardProps) {
   }
 
   async function handleLater() {
-    stopTimer()
+    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null }
     const session = sessionRef.current
     if (!session) return
     sessionRef.current = null
+    session.setDuration(getElapsed())
     await pauseSession({ taskId: task.id, session })
     showToast('tempo parcial salvo — continue quando quiser')
     onClose()
   }
+
+  const elapsed = getElapsed()
+  const seconds = task.remainingSeconds - elapsed
+  const pausedSeconds = getPausedElapsed()
 
   const isOver = seconds < 0
   const timerColor = isOver ? '#E24B4A' : '#ED93B1'
@@ -139,7 +165,7 @@ export function FocusTimerCard({ task, onClose }: FocusTimerCardProps) {
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#993556', marginTop: 6 }}>
         <span>pausa: {formatMinutes(pausedSeconds / 60)}</span>
-        <span>{isOver ? `excedeu ${formatMinutes(-seconds / 60)}` : `${pct}% concluído`} · total: {formatMinutes((task.totalSpentSeconds + (task.estimatedMinutes * 60 - seconds)) / 60)}</span>
+        <span>{isOver ? `excedeu ${formatMinutes(-seconds / 60)}` : `${pct}% concluído`} · total: {formatMinutes((task.totalSpentSeconds + elapsed) / 60)}</span>
       </div>
 
       {/* observações */}

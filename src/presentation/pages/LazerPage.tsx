@@ -15,7 +15,7 @@ function formatWeekRange(weekStart: string, weekEnd: string): string {
 }
 
 export function LazerPage() {
-  const { bank, activities, activeSession, sessionTick: _tick, history, loadBank, loadActivities, loadHistory, createActivity, deleteActivity, startSession, completeSession, tickSession } = useLeisureStore()
+  const { bank, activities, activeSession, history, loadBank, loadActivities, loadHistory, createActivity, deleteActivity, startSession, completeSession } = useLeisureStore()
   const { showToast } = useAppStore()
 
   const [showForm, setShowForm] = useState(false)
@@ -23,13 +23,22 @@ export function LazerPage() {
   const [newCost, setNewCost] = useState(30)
   const [selectedActivity, setSelectedActivity] = useState<LeisureActivity | null>(null)
   const [customMinutes, setCustomMinutes] = useState(30)
+  const [, forceUpdate] = useState(0)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => { loadBank(); loadActivities(); loadHistory() }, [])
 
   useEffect(() => {
     if (activeSession) {
-      intervalRef.current = setInterval(() => { tickSession() }, 1000)
+      intervalRef.current = setInterval(() => {
+        forceUpdate(n => n + 1)
+        // auto-complete when time is up
+        const elapsed = Math.floor((Date.now() - activeSession.startedAt.getTime()) / 1000)
+        if (elapsed >= activeSession.activityCostMinutes * 60) {
+          if (intervalRef.current) clearInterval(intervalRef.current)
+          useLeisureStore.getState().completeSession(elapsed)
+        }
+      }, 1000)
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
@@ -52,7 +61,8 @@ export function LazerPage() {
   }
 
   async function handleComplete() {
-    await completeSession()
+    const elapsed = activeSession ? Math.floor((Date.now() - activeSession.startedAt.getTime()) / 1000) : undefined
+    await completeSession(elapsed)
     showToast('lazer encerrado!')
   }
 
@@ -64,8 +74,9 @@ export function LazerPage() {
   }
 
   const balanceText = bank ? formatLeisureBalance(bank.balance.minutes) : '0m'
-  const remaining = activeSession ? activeSession.remainingSeconds : 0
-  const pct = activeSession ? Math.round((1 - activeSession.remainingSeconds / (activeSession.activityCostMinutes * 60)) * 100) : 0
+  const leisureElapsed = activeSession ? Math.floor((Date.now() - activeSession.startedAt.getTime()) / 1000) : 0
+  const remaining = activeSession ? Math.max(0, activeSession.activityCostMinutes * 60 - leisureElapsed) : 0
+  const pct = activeSession ? Math.min(100, Math.round((leisureElapsed / (activeSession.activityCostMinutes * 60)) * 100)) : 0
 
   const inputStyle: React.CSSProperties = { width: '100%', background: '#333', border: '.5px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '10px 12px', fontSize: 15, color: '#f0f0f0', outline: 'none', fontFamily: 'inherit' }
   const labelStyle: React.CSSProperties = { fontSize: 12, color: '#888', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6, display: 'block' }

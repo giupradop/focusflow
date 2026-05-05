@@ -32,7 +32,7 @@ type LeisureStore = {
   createActivity: (name: string, costMinutes: number) => Promise<void>
   deleteActivity: (id: number) => Promise<void>
   startSession: (activityId: number, requestedMinutes?: number) => Promise<void>
-  completeSession: () => Promise<void>
+  completeSession: (elapsedSeconds?: number) => Promise<void>
   tickSession: () => void
   setRatio: (ratio: number) => Promise<void>
 }
@@ -76,9 +76,10 @@ export const useLeisureStore = create<LeisureStore>((set, get) => ({
     set({ activeSession: session })
   },
 
-  completeSession: async () => {
+  completeSession: async (elapsedSeconds?: number) => {
     const { activeSession } = get()
     if (!activeSession) return
+    if (elapsedSeconds !== undefined) activeSession.setUsedSeconds(elapsedSeconds)
     await completeSessionUseCase.execute({ session: activeSession })
     set({ activeSession: null })
     await get().loadBank()
