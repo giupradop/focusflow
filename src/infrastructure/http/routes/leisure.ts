@@ -176,11 +176,11 @@ leisureRoutes.post('/focus/complete', async (req, res) => {
 
 leisureRoutes.post('/focus/pause', async (req, res) => {
   try {
-    const { taskId, sessionId, durationSeconds } = req.body
+    const { taskId, sessionId, durationSeconds, ratio } = req.body
     const session = Session.create(sessionId, taskId)
-    for (let i = 0; i < durationSeconds; i++) session.tick()
-    const useCase = new PauseSessionUseCase(new SqlTaskRepository())
-    await useCase.execute({ taskId, session })
+    session.setDuration(durationSeconds)
+    const useCase = new PauseSessionUseCase(new SqlTaskRepository(), new SqlLeisureRepository())
+    await useCase.execute({ taskId, session, ratio: ratio ?? 5 })
     res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ error: String(err) })
