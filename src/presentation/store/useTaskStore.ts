@@ -33,7 +33,7 @@ const pauseRecurrenceUseCase = new PauseRecurrenceUseCase(repository)
 const resumeRecurrenceUseCase = new ResumeRecurrenceUseCase(repository)
 //const leisureRepository = new LocalStorageLeisureRepository()
 const completeSessionUseCase = new CompleteSessionUseCase(repository, leisureRepository)
-const pauseSessionUseCase = new PauseSessionUseCase(repository)
+const pauseSessionUseCase = new PauseSessionUseCase(repository, leisureRepository)
 
 type TaskStore = {
   tasks: Task[]
@@ -46,7 +46,7 @@ type TaskStore = {
   weekOffset: number
   curCategory: Category | null
   completeSession: (input: { taskId: number; session: Session; ratio: number }) => Promise<void>
-  pauseSession: (input: { taskId: number; session: Session }) => Promise<void>
+  pauseSession: (input: { taskId: number; session: Session; ratio: number }) => Promise<void>
 
   loadWeek: (offset: number, category?: Category) => Promise<void>
   loadToday: () => Promise<void>
@@ -157,11 +157,14 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     await loadBank()
   },
 
-pauseSession: async (input) => {
-  await pauseSessionUseCase.execute(input)
-  const { weekOffset, curCategory } = get()
-  await get().loadWeek(weekOffset, curCategory ?? undefined)
-},
+  pauseSession: async (input) => {
+    await pauseSessionUseCase.execute(input)
+    recordFocusDay()
+    const { loadBank } = useLeisureStore.getState()
+    await loadBank()
+    const { weekOffset, curCategory } = get()
+    await get().loadWeek(weekOffset, curCategory ?? undefined)
+  },
 
   setWeekOffset: (offset) => set({ weekOffset: offset }),
   setCurCategory: (category) => set({ curCategory: category }),

@@ -90,7 +90,8 @@ export function FocusTimerCard({ task, onClose }: FocusTimerCardProps) {
     if (!session) return
     sessionRef.current = null
     session.setDuration(getElapsed())
-    await pauseSession({ taskId: task.id, session })
+    const { ratio } = useLeisureStore.getState()
+    await pauseSession({ taskId: task.id, session, ratio })
     showToast('tempo parcial salvo — continue quando quiser')
     onClose()
   }
