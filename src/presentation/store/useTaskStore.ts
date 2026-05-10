@@ -69,6 +69,7 @@ type TaskStore = {
     priorityLevel: string
     estimatedMinutes: number
     dueDate: Date
+    createdAt: Date
     notes: string
     recurrent: boolean
     recurDays: number[]

@@ -121,23 +121,25 @@ export class Task extends Entity<number> {
   }
 
   update(props: {
-  name: string
-  category: Category
-  priority: Priority
-  estimatedMinutes: number
-  dueDate: Date
-  notes: string
-  recurrent: boolean
-  recurDays: number[]
+    name: string
+    category: Category
+    priority: Priority
+    estimatedMinutes: number
+    dueDate: Date
+    createdAt: Date
+    notes: string
+    recurrent: boolean
+    recurDays: number[]
   }): void {
-  this.props.name = props.name
-  this.props.category = props.category
-  this.props.priority = props.priority
-  this.props.estimatedMinutes = props.estimatedMinutes
-  this.props.dueDate = props.dueDate
-  this.props.notes = props.notes
-  this.props.recurrent = props.recurrent
-  this.props.recurDays = props.recurDays
+    this.props.name = props.name
+    this.props.category = props.category
+    this.props.priority = props.priority
+    this.props.estimatedMinutes = props.estimatedMinutes
+    this.props.dueDate = props.dueDate
+    this.props.createdAt = props.createdAt
+    this.props.notes = props.notes
+    this.props.recurrent = props.recurrent
+    this.props.recurDays = props.recurDays
   }
 
   updateNotes(notes: string): void {

@@ -10,6 +10,7 @@ type UpdateTaskInput = {
   priorityLevel: string
   estimatedMinutes: number
   dueDate: Date
+  createdAt: Date
   notes: string
   recurrent: boolean
   recurDays: number[]
@@ -39,6 +40,7 @@ export class UpdateTaskUseCase {
       priority: Priority.create(input.priorityLevel),
       estimatedMinutes: input.estimatedMinutes,
       dueDate: input.dueDate,
+      createdAt: input.createdAt,
       notes: input.notes,
       recurrent: input.recurrent,
       recurDays: input.recurDays,
