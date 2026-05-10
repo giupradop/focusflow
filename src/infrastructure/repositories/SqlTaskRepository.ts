@@ -102,13 +102,13 @@ export class SqlTaskRepository implements ITaskRepository {
       await pool.query(
         `UPDATE task SET
           name = $1, category = $2, priority = $3, status = $4,
-          duedate = $5, estimatedminutes = $6, notes = $7, archived = $8,
-          recurrent = $9, recurdays = $10, recurpaused = $11,
-          completedat = $12, spentseconds = $13
-        WHERE id = $14`,
+          createdat = $5, duedate = $6, estimatedminutes = $7, notes = $8, archived = $9,
+          recurrent = $10, recurdays = $11, recurpaused = $12,
+          completedat = $13, spentseconds = $14
+        WHERE id = $15`,
         [
           task.name, task.category, task.priority.toString(), task.status,
-          task.dueDate, task.estimatedMinutes, task.notes ?? '', task.archived,
+          task.createdAt, task.dueDate, task.estimatedMinutes, task.notes ?? '', task.archived,
           task.recurrent, task.recurDays.join(','), task.recurPaused,
           task.completedAt ?? null, task.totalSpentSeconds, task.id,
         ]
