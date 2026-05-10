@@ -32,8 +32,14 @@ leisureRoutes.get('/history', async (_req, res) => {
 
 leisureRoutes.get('/bank', async (_req, res) => {
   try {
+    const pool = await (await import('../database')).getPool()
     const bank = await repo().findBank()
-    res.json({ balanceMinutes: bank.balance.minutes })
+    const spentRes = await pool.query(`SELECT COALESCE(SUM(usedseconds), 0) as total FROM leisuresession WHERE endedat IS NOT NULL`)
+    const totalSpentMinutes = Math.ceil(Number(spentRes.rows[0].total) / 60)
+    res.json({
+      balanceMinutes: bank.balance.minutes,
+      totalEarnedMinutes: bank.balance.minutes + totalSpentMinutes,
+    })
   } catch (err) {
     res.status(500).json({ error: String(err) })
   }

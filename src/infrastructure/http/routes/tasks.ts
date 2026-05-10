@@ -15,6 +15,16 @@ function repo() {
   return new SqlTaskRepository()
 }
 
+taskRoutes.get('/stats', async (_req, res) => {
+  try {
+    const pool = await (await import('../database')).getPool()
+    const result = await pool.query(`SELECT COALESCE(SUM(spentseconds), 0) as total FROM task`)
+    res.json({ totalFocusSeconds: Number(result.rows[0].total) })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
 taskRoutes.get('/week', async (req, res) => {
   try {
     const { start, end, category } = req.query

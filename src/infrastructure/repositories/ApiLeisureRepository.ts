@@ -13,6 +13,7 @@ export class ApiLeisureRepository implements ILeisureRepository {
     const data = await res.json()
     const bank = LeisureBank.create(1)
     if (data.balanceMinutes > 0) bank.deposit(data.balanceMinutes)
+    bank.setTotalEarned(data.totalEarnedMinutes ?? data.balanceMinutes)
     return bank
   }
 

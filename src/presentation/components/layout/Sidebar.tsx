@@ -1,14 +1,19 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAppStore } from '../../store/useAppStore'
 import { useLeisureStore } from '../../store/useLeisureStore'
 import { useTaskStore } from '../../store/useTaskStore'
 import { formatLeisureBalance } from '../../../utils/leisureCalc'
+import { formatMinutes } from '../../../utils/formatTime'
 import { getCurrentStreak, getLast7Days } from '../../../utils/streak'
+
+const BASE = `${import.meta.env.VITE_API_URL ?? 'http://localhost:3001'}/api`
+const HEADERS = { 'Content-Type': 'application/json', 'x-api-key': import.meta.env.VITE_API_KEY ?? '' }
 
 export function Sidebar() {
   const { currentPage, setCurrentPage, setCurCategory } = useAppStore()
   const { bank, activities } = useLeisureStore()
   const { allWeekTasks } = useTaskStore()
+  const [totalFocusSeconds, setTotalFocusSeconds] = useState(0)
 
   const balanceText = bank ? formatLeisureBalance(bank.balance.minutes) : '0m'
   const streak = getCurrentStreak()
@@ -19,6 +24,10 @@ export function Sidebar() {
     useLeisureStore.getState().loadActivities()
     useLeisureStore.getState().loadRatio()
     useTaskStore.getState().loadWeek(0)
+    fetch(`${BASE}/tasks/stats`, { headers: HEADERS })
+      .then(r => r.json())
+      .then(d => setTotalFocusSeconds(d.totalFocusSeconds ?? 0))
+      .catch(() => {})
   }, [])
 
   const pending = (t: { archived: boolean; status: string }) =>
@@ -156,12 +165,8 @@ export function Sidebar() {
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 14 }}>
-          <span style={{ color: '#888' }}>foco hoje</span>
-          <span style={{ fontWeight: 500 }}>0m</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 14 }}>
-          <span style={{ color: '#888' }}>tempo total</span>
-          <span style={{ fontWeight: 500 }}>0m</span>
+          <span style={{ color: '#888' }}>tempo total de foco</span>
+          <span style={{ fontWeight: 500 }}>{formatMinutes(totalFocusSeconds / 60)}</span>
         </div>
       </div>
     </aside>

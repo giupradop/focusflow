@@ -9,6 +9,7 @@ interface LeisureBankProps {
 
 export class LeisureBank extends Entity<number> {
   private props: LeisureBankProps
+  private _totalEarnedMinutes: number = 0
 
   private constructor(id: number, props: LeisureBankProps) {
     super(id)
@@ -24,6 +25,10 @@ export class LeisureBank extends Entity<number> {
 
   deposit(minutes: number): void {
     this.props.balance = this.props.balance.add(minutes)
+  }
+
+  setTotalEarned(minutes: number): void {
+    this._totalEarnedMinutes = minutes
   }
 
   withdraw(session: LeisureSession): void {
@@ -42,6 +47,6 @@ export class LeisureBank extends Entity<number> {
   get sessions() { return this.props.sessions }
 
   get totalDepositedMinutes(): number {
-    return this.props.sessions.reduce((acc, s) => acc + s.usedMinutes, 0)
+    return this._totalEarnedMinutes
   }
 }
