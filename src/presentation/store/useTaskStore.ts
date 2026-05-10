@@ -13,7 +13,6 @@ import { Session } from '../../domain/task/Session'
 import { CompleteSessionUseCase } from '../../application/task/CompleteSessionUseCase'
 import { PauseSessionUseCase } from '../../application/task/PauseSessionUseCase'
 import { useLeisureStore } from './useLeisureStore'
-import { recordFocusDay } from '../../utils/streak'
 
 import { ApiTaskRepository } from '../../infrastructure/repositories/ApiTaskRepository'
 import { ApiLeisureRepository } from '../../infrastructure/repositories/ApiLeisureRepository'
@@ -153,14 +152,14 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   completeSession: async (input) => {
     await completeSessionUseCase.execute(input)
-    recordFocusDay()
+    await useLeisureStore.getState().recordStreak()
     const { loadBank } = useLeisureStore.getState()
     await loadBank()
   },
 
   pauseSession: async (input) => {
     await pauseSessionUseCase.execute(input)
-    recordFocusDay()
+    await useLeisureStore.getState().recordStreak()
     const { loadBank } = useLeisureStore.getState()
     await loadBank()
     const { weekOffset, curCategory } = get()

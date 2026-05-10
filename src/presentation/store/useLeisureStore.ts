@@ -24,11 +24,14 @@ type LeisureStore = {
   history: LeisureHistory
   isLoading: boolean
   ratio: number
+  streakDays: string[]
 
   loadBank: () => Promise<void>
   loadActivities: () => Promise<void>
   loadHistory: () => Promise<void>
   loadRatio: () => Promise<void>
+  loadStreak: () => Promise<void>
+  recordStreak: () => Promise<void>
   createActivity: (name: string, costMinutes: number) => Promise<void>
   deleteActivity: (id: number) => Promise<void>
   startSession: (activityId: number, requestedMinutes?: number) => Promise<void>
@@ -45,6 +48,7 @@ export const useLeisureStore = create<LeisureStore>((set, get) => ({
   history: { weeklyHistory: [], perActivity: [] },
   isLoading: false,
   ratio: 5,
+  streakDays: [],
 
   loadBank: async () => {
     const bank = await repository.findBank()
@@ -106,5 +110,19 @@ export const useLeisureStore = create<LeisureStore>((set, get) => ({
   setRatio: async (ratio) => {
     set({ ratio })
     await fetch(CONFIG_BASE, { method: 'PUT', headers: HEADERS, body: JSON.stringify({ ratio }) })
+  },
+
+  loadStreak: async () => {
+    const res = await fetch(`${CONFIG_BASE}/streak`, { headers: HEADERS })
+    const data = await res.json()
+    set({ streakDays: data.days ?? [] })
+  },
+
+  recordStreak: async () => {
+    const today = new Date().toISOString().slice(0, 10)
+    const { streakDays } = get()
+    if (streakDays.includes(today)) return
+    await fetch(`${CONFIG_BASE}/streak`, { method: 'POST', headers: HEADERS })
+    set({ streakDays: [...streakDays, today] })
   },
 }))

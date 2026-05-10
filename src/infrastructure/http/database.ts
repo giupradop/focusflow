@@ -91,5 +91,11 @@ export async function initDatabase(): Promise<void> {
     WHERE NOT EXISTS (SELECT 1 FROM config WHERE id = 1)
   `)
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS focusday (
+      date DATE PRIMARY KEY
+    )
+  `)
+
   console.log('banco inicializado')
 }

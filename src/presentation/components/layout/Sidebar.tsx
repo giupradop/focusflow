@@ -11,18 +11,19 @@ const HEADERS = { 'Content-Type': 'application/json', 'x-api-key': import.meta.e
 
 export function Sidebar() {
   const { currentPage, setCurrentPage, setCurCategory } = useAppStore()
-  const { bank, activities } = useLeisureStore()
+  const { bank, activities, streakDays } = useLeisureStore()
   const { allWeekTasks } = useTaskStore()
   const [totalFocusSeconds, setTotalFocusSeconds] = useState(0)
 
   const balanceText = bank ? formatLeisureBalance(bank.balance.minutes) : '0m'
-  const streak = getCurrentStreak()
-  const last7 = getLast7Days()
+  const streak = getCurrentStreak(streakDays)
+  const last7 = getLast7Days(streakDays)
 
   useEffect(() => {
     useLeisureStore.getState().loadBank()
     useLeisureStore.getState().loadActivities()
     useLeisureStore.getState().loadRatio()
+    useLeisureStore.getState().loadStreak()
     useTaskStore.getState().loadWeek(0)
     fetch(`${BASE}/tasks/stats`, { headers: HEADERS })
       .then(r => r.json())

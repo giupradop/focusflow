@@ -1,22 +1,4 @@
-const STREAK_KEY = 'focusflow:streak'
-
-export function recordFocusDay(): void {
-  const today = new Date().toISOString().slice(0, 10)
-  const days = loadStreakDays()
-  if (!days.includes(today)) {
-    days.push(today)
-    localStorage.setItem(STREAK_KEY, JSON.stringify(days))
-  }
-}
-
-export function loadStreakDays(): string[] {
-  const raw = localStorage.getItem(STREAK_KEY)
-  if (!raw) return []
-  return JSON.parse(raw)
-}
-
-export function getCurrentStreak(): number {
-  const days = loadStreakDays()
+export function getCurrentStreak(days: string[]): number {
   if (!days.length) return 0
 
   let streak = 0
@@ -37,8 +19,7 @@ export function getCurrentStreak(): number {
   return streak
 }
 
-export function getLast7Days(): { date: string, hasFocus: boolean, isToday: boolean }[] {
-  const days = loadStreakDays()
+export function getLast7Days(days: string[]): { date: string, hasFocus: boolean, isToday: boolean }[] {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
